@@ -4,5 +4,4 @@ $('#create-btn').on('click', () => {
 
 $('#load-btn').on('click', () => {
     window.electronAPI.loadTournament();
-    window.electronAPI.changePage('schedule/schedule.html');
 });
