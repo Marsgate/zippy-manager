@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+        <title>Zippy Manager</title>
+        <link rel="stylesheet" href="../main.css">
+        <link rel="stylesheet" href="create.css">
+        <script src="../jquery.min.js"></script>
+    </head>
+    <body>
+        <div class="row">
+            <div class="column1">
+                <h1>Create a tournament</h1>
+
+                <p id="error"></p>
+
+                <div id="match-count-container">
+                    <label for="match-count">Number of qualification matches per team: </label>
+                    <input type="text" id="match-count"/>
+                </div>
+
+                <div id="team-list-container">
+                    <label for="team-list">Team list</label>
+                    <textarea id="team-list"></textarea>
+                </div>
+
+                <input type="button" value="Generate Match Schedule" id="gen-btn"/>
+                <input type="button" value="Create Tournament" id="create-btn" hidden/>
+            </div>
+            <div class="column2">
+                <div id="schedule-container" hidden>
+                    <table id='schedule'>
+                        <tr>
+                            <th>Match#</th>
+                            <th>Red 1</th>
+                            <th>Red 2</th>
+                            <th>Blue 1</th>
+                            <th>Blue 2</th>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <script src="./create.js"></script>
+    </body>
+</html>

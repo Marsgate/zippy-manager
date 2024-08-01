@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+        <title>Zippy Manager</title>
+        <link rel="stylesheet" href="../main.css">
+        <link rel="stylesheet" href="schedule.css">
+        <script src="../jquery.min.js"></script>
+    </head>
+    <body>
+        <input type="button" value="View Timer" id="view-timer"/>
+        <div class="row">
+            <div class="column">
+                <h1>Match Schedule</h1>
+                <div id="schedule-container">
+                    <table id="schedule">
+                        <tr>
+                            <th>Match#</th>
+                            <th>Red 1</th>
+                            <th>Red 2</th>
+                            <th>Blue 1</th>
+                            <th>Blue 2</th>
+                            <th>Red Score</th>
+                            <th>Blue Score</th>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="column">
+                <h1>Rankings</h1>
+                <div id="rankings-container">
+                    <table id="rankings">
+                        <tr>
+                            <th>Rank</th>
+                            <th>Team#</th>
+                            <th>Wins</th>
+                            <th>Losses</th>
+                            <th>Ties</th>
+                            <th>Total Points</th>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+            
+        <script src="./schedule.js"></script>
+    </body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+        <title>Zippy Manager</title>
+        <link rel="stylesheet" href="../main.css">
+        <link rel="stylesheet" href="timer.css">
+        <script src="../jquery.min.js"></script>
+    </head>
+    <body>
+        <div id="controls">
+            <div id="nav-container">
+                <input type="button" value="View Schedule" id="view-schedule"/>
+                <input type="button" value="Previous Match" id="prev-match"/>
+                <input type="button" value="Next Match" id="next-match"/>
+                <div id="match-complete-container">
+                    <label>Match Complete</label>
+                    <input type="checkbox" id="match-complete"/>
+                </div>
+            </div>
+            <h2>Match Number: <span id="match-number"></span></h2>
+        </div>
+        <h1 id="timer">2:00</h1>
+        <div class="timer-control-container">
+            <input type="button" value="Start" id="btn-start"/>
+            <input type="button" value="Stop" id="btn-stop"/>
+            <input type="button" value="Reset" id="btn-reset"/>
+        </div>
+        <div id="red" class="score-container">
+            <div class="score"><p>0</p></div>
+            <input type="button" value="+2" id="btn-2-red"/>
+            <input type="button" value="+5" id="btn-5-red"/>
+            <input type="button" value="+12" id="btn-12-red"/>
+        </div>
+        <div id="blue" class="score-container">
+            <div class="score"><p>0</p></div>
+            <input type="button" value="+2" id="btn-2-blue"/>
+            <input type="button" value="+5" id="btn-5-blue"/>
+            <input type="button" value="+12" id="btn-12-blue"/>
+        </div>
+        <p>Right click to subtract.</p>
+        <script src="./timer.js"></script>
+    </body>
+</html>
