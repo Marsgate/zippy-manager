@@ -62,42 +62,31 @@ function scheduleGen(totalMatchCount, teamNameArray) {
     while (true) {
         let match = [];
 
-        // get a list of teams that were not in last match 
-        // and are below the target match count
+        // get a list of teams that are below the target match count
         let availableTeams = [];
         teamArray.forEach(team => {
             if (
-                !lastMatch.includes(team) 
-                && team.matchCount < targetMatchCount
+                team.matchCount < totalMatchCount
+                && (
+                    lastMatch.includes(team)
+                    && lastMatch2.includes(team)
+                ) == false
             ) {
                 availableTeams.push(team);
             }
         });
 
-        // look for teams already at the target count if less than 4 teams
-        if (availableTeams.length < 4) {
-            teamArray.forEach(team => {
-                if (
-                    !lastMatch.includes(team) 
-                    && team.matchCount == targetMatchCount
-                ) {
-                    availableTeams.push(team);
-                }
-            });
-        }
+        // // look for teams already at the target count if less than 4 teams
+        // if (availableTeams.length < 4) {
+        //     teamArray.forEach(team => {
+        //         if (
+        //             team.matchCount < targetMatchCount
+        //         ) {
+        //             availableTeams.push(team);
+        //         }
+        //     });
+        // }
 
-        // pull from previous match if less than 4 teams
-        if (availableTeams.length < 4) {
-            lastMatch.forEach(team => {
-                if (
-                    !availableTeams.includes(team)
-                    && !lastMatch2.includes(team)
-                    && team.matchCount <= totalMatchCount
-                ) {
-                    availableTeams.push(team);
-                }
-            });
-        }
 
         // create match from 4 random available teams
         shuffleArray(availableTeams);
