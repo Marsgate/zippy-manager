@@ -8,5 +8,8 @@
   },
   "author": "Micah Rassi",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "electron": "^37.2.3"
+  }
 }
