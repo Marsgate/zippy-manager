@@ -33,10 +33,16 @@ $('#gen-btn').on('click', () => {
 });
 
 function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
+  for (let i = array.length - 1; i > 0; i--) {
+    // Generate a random index j between 0 and i (inclusive)
+    const j = Math.floor(Math.random() * (i + 1));
+
+    // Swap elements at index i and j
+    const temp = array[i];
+    array[i] = array[j];
+    array[j] = temp;
+  }
+  return array; // Return the shuffled array (optional, as it's modified in-place)
 }
 
 function scheduleGen(totalMatchCount, teamNameArray) {
@@ -66,7 +72,7 @@ function scheduleGen(totalMatchCount, teamNameArray) {
         let availableTeams = [];
         teamArray.forEach(team => {
             if (
-                team.matchCount < totalMatchCount
+                team.matchCount <= totalMatchCount
                 && (
                     lastMatch.includes(team)
                     && lastMatch2.includes(team)
@@ -76,20 +82,20 @@ function scheduleGen(totalMatchCount, teamNameArray) {
             }
         });
 
-        // // look for teams already at the target count if less than 4 teams
-        // if (availableTeams.length < 4) {
-        //     teamArray.forEach(team => {
-        //         if (
-        //             team.matchCount < targetMatchCount
-        //         ) {
-        //             availableTeams.push(team);
-        //         }
-        //     });
-        // }
+        // look for teams already at the target count if less than 4 teams
+        if (availableTeams.length < 4) {
+            teamArray.forEach(team => {
+                if (
+                    team.matchCount > targetMatchCount
+                ) {
+                    availableTeams.push(team);
+                }
+            });
+        }
 
 
         // create match from 4 random available teams
-        shuffleArray(availableTeams);
+        availableTeams = shuffleArray(availableTeams);
         for (i=0;i<4;i++) {
             match.push(availableTeams[i]);
         }
