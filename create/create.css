@@ -60,3 +60,7 @@ input:hover {
     flex: 70%;
     margin: 20px;
 }
+
+#error {
+    margin-bottom: 20px;
+}

@@ -24,8 +24,17 @@ $('#gen-btn').on('click', () => {
         return;
     }
 
-    scheduleGen(totalMatchCount, teamNameArray);
-
+    success = false;
+    extraMatchTolerance = 0
+    loopCount = 0;
+    do {
+        success = scheduleGen(totalMatchCount, teamNameArray, extraMatchTolerance);
+        loopCount ++;
+        if (loopCount > 1000) {
+            extraMatchTolerance ++;
+            loopCount = 0;
+        }
+    } while (success == false);
 });
 
 function shuffleArray(array) {
@@ -73,7 +82,7 @@ function findMatch(availableAlliances) {
     return match;
 }
 
-function scheduleGen(totalMatchCount, teamNameArray) {
+function scheduleGen(totalMatchCount, teamNameArray, extraMatchTolerance) {
     
     // create and populate team array
     teamArray = [];
@@ -184,9 +193,9 @@ function scheduleGen(totalMatchCount, teamNameArray) {
         } while (match == null);
 
         // shuffle the colors and team order for added randomness!
-        flipAllianceColors = Math.random() > .5;
-        flipRedOrder = Math.random() > .5;
-        flipBlueOrder = Math.random() > .5;
+        flipAllianceColors = (Math.random() > .5);
+        flipRedOrder = (Math.random() > .5);
+        flipBlueOrder = (Math.random() > .5);
 
         if (flipAllianceColors) {
             let temp = match[0];
@@ -241,36 +250,44 @@ function scheduleGen(totalMatchCount, teamNameArray) {
 
     }
 
-    // log the number of teams that have played more than the target match count
-    let overplayedTeams = teamArray.filter(team => team.matchCount > totalMatchCount);
-    if (overplayedTeams.length > 0) {
-        console.log('The following teams have been scheduled for more than ' + totalMatchCount + ' matches:');
-        overplayedTeams.forEach(team => {
-            console.log(team.name + ': ' + team.matchCount + ' matches');
-        });
-    } else {
-        console.log('All teams have been scheduled for ' + totalMatchCount + ' matches.');
-    }
-
     let scheduleTable = $('#schedule');
 
-    // delete old data
-    scheduleTable.find("tr:gt(0)").remove();
+    success = (teamArray
+    .filter((team) => team.matchCount > totalMatchCount)
+    .length <= extraMatchTolerance);
 
-    // write data to match schedule table
-    schedule.forEach(matchData => {
-        element = '<tr>';
-        element += '<td>' + matchData.matchNumber + '</td>';
-        element += '<td>' + matchData.red1 + '</td>';
-        element += '<td>' + matchData.red2 + '</td>';
-        element += '<td>' + matchData.blue1 + '</td>';
-        element += '<td>' + matchData.blue2 + '</td>';
-        element += '</tr>';
-        scheduleTable.append(element);
-    });
+    if (success) {
+        
+        let overplayedTeams = teamArray.filter(t => t.matchCount > totalMatchCount);
+        if (overplayedTeams.length) {
+            let names = overplayedTeams.map(t => t.name).join(', ');
+            $('#error').text(`Extra matches generated for: ${names}`);
+        } else {
+            $('#error').text('');
+        }
 
-    $('#schedule-container').show();
-    $('#create-btn').show();
+        let scheduleTable = $('#schedule');
+
+        // delete old data
+        scheduleTable.find("tr:gt(0)").remove();
+
+        // write data to match schedule table
+        schedule.forEach(matchData => {
+            element = '<tr>';
+            element += '<td>' + matchData.matchNumber + '</td>';
+            element += '<td>' + matchData.red1 + '</td>';
+            element += '<td>' + matchData.red2 + '</td>';
+            element += '<td>' + matchData.blue1 + '</td>';
+            element += '<td>' + matchData.blue2 + '</td>';
+            element += '</tr>';
+            scheduleTable.append(element);
+        });
+
+        $('#schedule-container').show();
+        $('#create-btn').show();
+    }
+
+    return success;
 }
 
 $('#create-btn').on('click', () => {
