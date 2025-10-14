@@ -28,6 +28,7 @@ $('#gen-btn').on('click', () => {
     do {
         try {
             success = scheduleGen(totalMatchCount, teamNameArray);
+            success = true; // test
         } catch {}
     } while (success == false);
 });
@@ -56,6 +57,27 @@ function scheduleGen(totalMatchCount, teamNameArray) {
         });
     });
 
+    // create an alliance array
+    // an alliance is any combination of 2 teams
+    // each match is made up of 2 unique alliances that have (ideally) not played a qualification together yet
+    allianceArray = [];
+    teamArray.forEach((team1, teamIndex1) => {
+        teamArray.forEach((team2, teamIndex2) => {
+            alliance = {
+                'team1': team1,
+                'team2': team2,
+                'hasPlayed': false
+            };
+
+            if (
+                teamIndex1 < teamIndex2 // prevents pairing up 1, 2 and then 2, 1, etc
+                && !allianceArray.includes(alliance)
+            ) {
+                allianceArray.push(alliance);
+            }
+        });
+    });
+
     let lastMatch = [];
     let lastMatch2 = []; 
 
@@ -68,36 +90,120 @@ function scheduleGen(totalMatchCount, teamNameArray) {
     while (true) {
         let match = [];
 
-        // get a list of teams that are below the target match count
-        let availableTeams = [];
-        teamArray.forEach(team => {
-            if (
-                team.matchCount <= totalMatchCount
-                && (
-                    lastMatch.includes(team)
-                    && lastMatch2.includes(team)
-                ) == false
-            ) {
-                availableTeams.push(team);
-            }
-        });
+        let availableAlliances = [];
 
-        // look for teams already at the target count if less than 4 teams
-        if (availableTeams.length < 4) {
-            teamArray.forEach(team => {
-                if (
-                    team.matchCount > targetMatchCount
-                ) {
-                    availableTeams.push(team);
+        let selectionLoopCount = 1;
+
+        // loop through selection logic with decreasingly strict criteria until we get 2 alliances
+        while (availableAlliances.length < 2) {
+
+            allianceArray.forEach(alliance => {
+                
+                // skip alliances that are already available from a previous iteration
+                if (availableAlliances.includes(alliance)) {
+                    return;
                 }
+
+                /* loop 1
+                - Alliance hasn't played yet
+                - both teams are below the target match count
+                */
+                if (selectionLoopCount == 1) {
+                    if (
+                        alliance.hasPlayed == false
+                        && alliance.team1.matchCount < targetMatchCount
+                        && alliance.team2.matchCount < targetMatchCount
+                    ) {
+                        availableAlliances.push(alliance);
+                    }
+                } 
+                
+                /* loop 2
+                    - Alliance hasn't played yet
+                    - 1 team is below the target match count
+                */
+                if (selectionLoopCount == 2) {
+                    if (
+                        alliance.hasPlayed == false
+                        && (
+                            alliance.team1.matchCount < targetMatchCount
+                            || alliance.team2.matchCount < targetMatchCount
+                        )
+                    ) {
+                        availableAlliances.push(alliance);
+                    }
+                } 
+                
+                /* loop 3
+                    - Alliance hasn't played yet
+                    - Neither team is below the target match count
+                */
+                if (selectionLoopCount == 3) {
+                    if (
+                        alliance.hasPlayed == false
+                    ) {
+                        availableAlliances.push(alliance);
+                    }
+                }
+
+                /* loop 4
+                    - any alliance
+                */
+                if (selectionLoopCount == 4) {
+                    availableAlliances.push(alliance);
+                }
+
             });
+
+            selectionLoopCount ++;
         }
 
+        // create match from 2 random available alliances
+        availableAlliances = shuffleArray(availableAlliances);
+        availableAlliances.forEach(alliance => {
+            
+            // check if the match has 4 teams
+            if (match.length == 4) {
+                return;
+            }
 
-        // create match from 4 random available teams
-        availableTeams = shuffleArray(availableTeams);
-        for (i=0;i<4;i++) {
-            match.push(availableTeams[i]);
+            // check if any of the teams are already in the match
+            if (
+                match.includes(alliance.team1)
+                || match.includes(alliance.team2)
+            ) {
+                return;
+            }
+
+            // add the teams
+            match.push(alliance.team1);
+            match.push(alliance.team2);
+            alliance.hasPlayed = true;
+        });
+
+        // shuffle the colors and team order for added randomness!
+        flipAllianceColors = Math.random() > .5;
+        flipRedOrder = Math.random() > .5;
+        flipBlueOrder = Math.random() > .5;
+
+        if (flipAllianceColors) {
+            let temp = match[0];
+            match[0] = match[2];
+            match[2] = match[1];
+            match[1] = match[3];
+            match[3] = temp;
+        }
+
+        if (flipRedOrder) {
+            let temp = match[0];
+            match[0] = match[1];
+            match[1] = temp;
+        }
+
+        if (flipBlueOrder) {
+            let temp = match[2];
+            match[2] = match[3];
+            match[3] = temp;
         }
 
         // place match on schedule
@@ -133,9 +239,11 @@ function scheduleGen(totalMatchCount, teamNameArray) {
 
     }
 
-    success = (teamArray
-    .filter((team) => team.matchCount > totalMatchCount)
-    .length < 4);
+    // success = (teamArray
+    // .filter((team) => team.matchCount > totalMatchCount)
+    // .length < 4);
+
+    success = true;
 
     if (success) {
         let scheduleTable = $('#schedule');
