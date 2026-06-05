@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+        <title>Zippy Manager</title>
+        <link rel="stylesheet" href="../main.css">
+        <link rel="stylesheet" href="bracket.css">
+        <script src="../jquery.min.js"></script>
+        <script src="../shared/tournament.js"></script>
+    </head>
+    <body>
+        <input type="button" value="Back to Schedule" id="view-schedule"/>
+        <input type="button" value="View Match Timer" id="view-timer"/>
+        <h1>Elimination Bracket</h1>
+        <p id="bracket-status"></p>
+        <div id="bracket"></div>
+        <script src="./bracket.js"></script>
+    </body>
+</html>

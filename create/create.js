@@ -297,7 +297,12 @@ $('#create-btn').on('click', () => {
         'schedule': schedule,
         'teams': teamArray,
         'currentMatch': 1,
-        'alliances': []
+        'alliances': [],
+        'currentStage': 'qualification',
+        'eliminations': {
+            'matches': [],
+            'currentMatch': 1
+        }
     };
     
     // send data to backend

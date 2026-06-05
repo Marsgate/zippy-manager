@@ -1,16 +1,82 @@
 $(async function(){
     let tournamentData = await window.electronAPI.getTournamentData();
+    window.tournamentUtils.ensureTournamentDataShape(tournamentData);
 
+    const stageConfig = {
+        qualification: {
+            matches: tournamentData.schedule,
+            page: 'schedule/schedule.html',
+            buttonLabel: 'View Schedule',
+            matchPrefix: 'Q'
+        },
+        elimination: {
+            matches: tournamentData.eliminations.matches,
+            page: 'bracket/bracket.html',
+            buttonLabel: 'View Bracket',
+            matchPrefix: 'E'
+        }
+    };
+
+    let currentStage = tournamentData.currentStage == 'elimination' ? 'elimination' : 'qualification';
+    let currentStageData = stageConfig[currentStage];
     let currentMatch = null;
 
-    function updateMatchNumber(matchNumber) {
-        $('#match-number').text(matchNumber);
-        tournamentData.currentMatch = matchNumber;
-        currentMatch = tournamentData.schedule.find(match => match.matchNumber == tournamentData.currentMatch);
-        $('#match-complete').prop('checked', currentMatch.complete);
+    function getStageMatchNumber() {
+        if (currentStage == 'qualification') {
+            return tournamentData.currentMatch;
+        }
+        return tournamentData.eliminations.currentMatch;
     }
 
-    updateMatchNumber(tournamentData.currentMatch);
+    function setStageMatchNumber(matchNumber) {
+        if (currentStage == 'qualification') {
+            tournamentData.currentMatch = matchNumber;
+        } else {
+            tournamentData.eliminations.currentMatch = matchNumber;
+        }
+    }
+
+    function findCurrentMatch(matchNumber) {
+        return currentStageData.matches.find(match => match.matchNumber == matchNumber) || null;
+    }
+
+    function saveTournamentData(preserveViewedMatch = false) {
+        const viewedMatchNumber = preserveViewedMatch ? getStageMatchNumber() : null;
+
+        if (currentStage == 'elimination') {
+            window.tournamentUtils.updateEliminationProgress(tournamentData);
+            if (preserveViewedMatch && viewedMatchNumber != null) {
+                tournamentData.eliminations.currentMatch = viewedMatchNumber;
+            }
+        }
+
+        window.electronAPI.saveTournamentData(tournamentData);
+    }
+
+    function refreshNavState() {
+        const matchIndex = currentStageData.matches.findIndex(match => match.matchNumber == getStageMatchNumber());
+        $('#prev-match').prop('disabled', matchIndex <= 0);
+        $('#next-match').prop('disabled', matchIndex == -1 || matchIndex >= currentStageData.matches.length - 1);
+    }
+
+    function updateMatchNumber(matchNumber) {
+        setStageMatchNumber(matchNumber);
+        currentMatch = findCurrentMatch(getStageMatchNumber());
+
+        if (!currentMatch) {
+            $('#match-number').text('Unavailable');
+            $('#match-complete').prop('checked', false);
+            refreshNavState();
+            return;
+        }
+
+        const label = currentMatch.label || (currentStageData.matchPrefix + currentMatch.matchNumber);
+        $('#match-number').text(label);
+        $('#match-complete').prop('checked', currentMatch.complete);
+        refreshNavState();
+    }
+
+    $('#view-schedule').val(currentStageData.buttonLabel);
 
     let matchTime = 120;
     let currentTime = matchTime;
@@ -25,28 +91,27 @@ $(async function(){
     let blueScoreDisplay = $('#blue .score p');
 
     function count() {
-        minutes = parseInt(currentTime / 60, 10);
-        seconds = parseInt(currentTime % 60, 10);
+        let minutes = parseInt(currentTime / 60, 10);
+        let seconds = parseInt(currentTime % 60, 10);
 
-        minutes = minutes < 10 ? "" + minutes : minutes;
-        seconds = seconds < 10 ? "0" + seconds : seconds;
+        minutes = minutes < 10 ? '' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
 
-        (display).text(minutes + ":" + seconds);
+        display.text(minutes + ':' + seconds);
 
-        
         if (counting == true) {
             if (--currentTime < 0) {
                 currentTime = 0;
                 counting = false;
                 endAudio.play();
             }
-    
+
             setTimeout(count, 1000);
         }
     }
-    
+
     $('#btn-start').on('click', function() {
-        if (counting == false) {
+        if (counting == false && currentMatch) {
             startAudio.play();
             counting = true;
             count();
@@ -62,29 +127,36 @@ $(async function(){
         count();
     });
 
-    function resetScore(reset = true) {
-        counting = false;
-        currentTime = matchTime;
-        if (reset) {
-            currentMatch.redScore = 0;
-            currentMatch.blueScore = 0;
-        }
-        scoreUpdate();
-        count();
-    }
-    resetScore(false);
-
-    $('#btn-reset').on('click', function() {
-        resetScore();
-    });
-
     function scoreUpdate() {
+        if (!currentMatch) {
+            redScoreDisplay.text('0');
+            blueScoreDisplay.text('0');
+            return;
+        }
+
         redScoreDisplay.text(currentMatch.redScore);
         blueScoreDisplay.text(currentMatch.blueScore);
     }
 
+    function resetScore(reset = true) {
+        counting = false;
+        currentTime = matchTime;
+        if (reset && currentMatch) {
+            currentMatch.redScore = 0;
+            currentMatch.blueScore = 0;
+            if (currentStage == 'elimination') {
+                currentMatch.complete = false;
+            }
+        }
+        scoreUpdate();
+        count();
+    }
+
     function addScore(score, color) {
-        
+        if (!currentMatch) {
+            return;
+        }
+
         if (color == 'red') {
             currentMatch.redScore += score;
         } else {
@@ -94,46 +166,68 @@ $(async function(){
         scoreUpdate();
     }
 
-    $(document).on('keydown', function() {
-        holdingShift = true;
-    })
+    $('#btn-reset').on('click', function() {
+        resetScore();
+    });
 
-    $(document).on('keyup', function() {
-        holdingShift = false;
-    })
+    $('#btn-plus-blue').on('click', function() { addScore(1, 'blue'); });
+    $('#btn-minus-blue').on('click', function() { addScore(-1, 'blue'); });
+    $('#btn-plus-red').on('click', function() { addScore(1, 'red'); });
+    $('#btn-minus-red').on('click', function() { addScore(-1, 'red'); });
 
-    $('#btn-plus-blue').on('click', function() {addScore(1, 'blue');});
-    $('#btn-minus-blue').on('click', function() {addScore(-1, 'blue');});
+    $('#match-complete').on('change', function() {
+        if (!currentMatch) {
+            return;
+        }
 
-    $('#btn-plus-red').on('click', function() {addScore(1, 'red');});
-    $('#btn-minus-red').on('click', function() {addScore(-1, 'red');});
-
+        currentMatch.complete = $(this).prop('checked');
+        saveTournamentData(true);
+        updateMatchNumber(getStageMatchNumber());
+    });
 
     $('#match-complete-container').on('click', function(event) {
-        currentMatch.complete = !currentMatch.complete;
-        $('#match-complete').prop('checked', currentMatch.complete);
-    });
+        if ($(event.target).is('#match-complete')) {
+            return;
+        }
 
-    function saveTournamentData() {
-        window.electronAPI.saveTournamentData(tournamentData);
-    }
+        const checkbox = $('#match-complete');
+        checkbox.prop('checked', !checkbox.prop('checked'));
+        checkbox.trigger('change');
+    });
 
     $('#view-schedule').on('click', function() {
-        window.electronAPI.changePage('schedule/schedule.html');
-        saveTournamentData();
+        saveTournamentData(currentStage == 'elimination');
+        window.electronAPI.changePage(currentStageData.page);
     });
+
     $('#prev-match').on('click', function() {
-        if (tournamentData.currentMatch > 1) {
-            updateMatchNumber(tournamentData.currentMatch-1)
-            saveTournamentData();
+        const matchIndex = currentStageData.matches.findIndex(match => match.matchNumber == getStageMatchNumber());
+        if (matchIndex > 0) {
+            updateMatchNumber(currentStageData.matches[matchIndex - 1].matchNumber);
+            saveTournamentData(true);
             resetScore(false);
         }
     });
+
     $('#next-match').on('click', function() {
-        if (tournamentData.currentMatch < tournamentData.schedule.length){
-            updateMatchNumber(tournamentData.currentMatch+1)
-            saveTournamentData();
+        const matchIndex = currentStageData.matches.findIndex(match => match.matchNumber == getStageMatchNumber());
+        if (matchIndex >= 0 && matchIndex < currentStageData.matches.length - 1) {
+            updateMatchNumber(currentStageData.matches[matchIndex + 1].matchNumber);
+            saveTournamentData(true);
             resetScore(false);
         }
     });
+
+    if (currentStage == 'elimination' && currentStageData.matches.length == 0) {
+        $('#match-number').text('Unavailable');
+        $('#match-complete').prop('checked', false);
+        $('#btn-start, #btn-stop, #btn-reset, #btn-plus-blue, #btn-minus-blue, #btn-plus-red, #btn-minus-red').prop('disabled', true);
+        refreshNavState();
+        scoreUpdate();
+        count();
+        return;
+    }
+
+    updateMatchNumber(getStageMatchNumber());
+    resetScore(false);
 });

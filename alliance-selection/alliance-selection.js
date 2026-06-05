@@ -1,60 +1,3 @@
-function buildRankings(tournamentData) {
-    const rankings = [];
-
-    tournamentData.teams.forEach(team => {
-        rankings.push({
-            name: team.name,
-            score: 0,
-            win: 0,
-            loss: 0,
-            tie: 0
-        });
-    });
-
-    tournamentData.schedule.forEach(matchData => {
-        if (matchData.complete == false) {
-            return;
-        }
-
-        const red1 = rankings.find(team => team.name == matchData.red1);
-        const red2 = rankings.find(team => team.name == matchData.red2);
-        const blue1 = rankings.find(team => team.name == matchData.blue1);
-        const blue2 = rankings.find(team => team.name == matchData.blue2);
-
-        red1.score += matchData.redScore;
-        red2.score += matchData.redScore;
-        blue1.score += matchData.blueScore;
-        blue2.score += matchData.blueScore;
-
-        if (matchData.redScore > matchData.blueScore) {
-            red1.win++;
-            red2.win++;
-            blue1.loss++;
-            blue2.loss++;
-        } else if (matchData.redScore < matchData.blueScore) {
-            red1.loss++;
-            red2.loss++;
-            blue1.win++;
-            blue2.win++;
-        } else {
-            red1.tie++;
-            red2.tie++;
-            blue1.tie++;
-            blue2.tie++;
-        }
-    });
-
-    rankings.sort((a, b) => {
-        const wpDif = (b.win - a.win) * 2 + b.tie - a.tie;
-        if (wpDif != 0) {
-            return wpDif;
-        }
-        return b.score - a.score;
-    });
-
-    return rankings;
-}
-
 function getSelectedTeams(alliances) {
     const selectedTeams = [];
 
@@ -134,11 +77,8 @@ function renderPartnerOptions(partnerList, nextCaptain, rankings, alliances, sav
 
 $(async function() {
     const tournamentData = await window.electronAPI.getTournamentData();
-    const rankings = buildRankings(tournamentData);
-
-    if (!Array.isArray(tournamentData.alliances)) {
-        tournamentData.alliances = [];
-    }
+    window.tournamentUtils.ensureTournamentDataShape(tournamentData);
+    const rankings = window.tournamentUtils.buildRankings(tournamentData);
 
     const alliances = tournamentData.alliances;
     const alliancesTable = $('#alliances');
@@ -148,6 +88,26 @@ $(async function() {
     const selectionStatus = $('#selection-status');
     const captainHeading = $('#captain-heading');
     const undoPickButton = $('#undo-pick');
+    const viewBracketButton = $('#view-bracket');
+
+    function syncEliminations() {
+        if (alliances.length >= 2 && getNextCaptain(rankings, alliances) == null) {
+            window.tournamentUtils.regenerateEliminationBracket(tournamentData);
+            viewBracketButton.prop('disabled', false);
+        } else {
+            tournamentData.eliminations = {
+                matches: [],
+                currentMatch: 1
+            };
+            viewBracketButton.prop('disabled', true);
+        }
+    }
+
+    function persistAndRefresh() {
+        syncEliminations();
+        window.electronAPI.saveTournamentData(tournamentData);
+        refreshPage();
+    }
 
     function refreshPage() {
         const nextCaptain = getNextCaptain(rankings, alliances);
@@ -158,7 +118,11 @@ $(async function() {
 
         if (!nextCaptain) {
             currentSelection.hide();
-            selectionStatus.text('Alliance selection is complete.');
+            if (alliances.length >= 2) {
+                selectionStatus.text('Alliance selection is complete. The elimination bracket is ready.');
+            } else {
+                selectionStatus.text('Alliance selection needs at least two alliances to build a bracket.');
+            }
             return;
         }
 
@@ -184,8 +148,7 @@ $(async function() {
             captain: captain,
             partner: partner
         });
-        window.electronAPI.saveTournamentData(tournamentData);
-        refreshPage();
+        persistAndRefresh();
     }
 
     function undoLastSelection() {
@@ -194,15 +157,18 @@ $(async function() {
         }
 
         alliances.pop();
-        window.electronAPI.saveTournamentData(tournamentData);
-        refreshPage();
+        persistAndRefresh();
     }
 
     undoPickButton.on('click', undoLastSelection);
-
+    syncEliminations();
     refreshPage();
 });
 
 $('#view-schedule').on('click', function(){
     window.electronAPI.changePage('schedule/schedule.html');
+});
+
+$('#view-bracket').on('click', function(){
+    window.electronAPI.changePage('bracket/bracket.html');
 });
