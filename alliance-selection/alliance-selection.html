@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+        <title>Zippy Manager</title>
+        <link rel="stylesheet" href="../main.css">
+        <link rel="stylesheet" href="alliance-selection.css">
+        <script src="../jquery.min.js"></script>
+    </head>
+    <body>
+        <input type="button" value="Back to Schedule" id="view-schedule"/>
+        <input type="button" value="Undo Last Pick" id="undo-pick"/>
+        <div class="row">
+            <div class="column">
+                <h1>Alliance Selection</h1>
+                <p id="selection-status"></p>
+                <div id="current-selection" hidden>
+                    <h2 id="captain-heading"></h2>
+                    <p>Select a partner for the current captain.</p>
+                    <div id="partner-list"></div>
+                </div>
+            </div>
+            <div class="column">
+                <h1>Rankings</h1>
+                <table id="rankings">
+                    <tr>
+                        <th>Rank</th>
+                        <th>Team#</th>
+                        <th>Wins</th>
+                        <th>Losses</th>
+                        <th>Ties</th>
+                        <th>Total Points</th>
+                        <th>Status</th>
+                    </tr>
+                </table>
+
+                <h1>Selected Alliances</h1>
+                <table id="alliances">
+                    <tr>
+                        <th>Seed</th>
+                        <th>Captain</th>
+                        <th>Partner</th>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <script src="./alliance-selection.js"></script>
+    </body>
+</html>

@@ -296,7 +296,8 @@ $('#create-btn').on('click', () => {
     tournamentData = {
         'schedule': schedule,
         'teams': teamArray,
-        'currentMatch': 1
+        'currentMatch': 1,
+        'alliances': []
     };
     
     // send data to backend
