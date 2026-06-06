@@ -95,20 +95,20 @@
 
     function createEmptyEliminationMatch(matchNumber, roundIndex, slotIndex, roundSize) {
         const totalRounds = Math.log2(roundSize);
-        const roundFromFinal = totalRounds - roundIndex;
+        const roundsRemaining = totalRounds - roundIndex;
         let roundName = 'Round ' + (roundIndex + 1);
 
-        if (roundFromFinal == 0) {
+        if (roundsRemaining == 1) {
             roundName = 'Final';
-        } else if (roundFromFinal == 1) {
+        } else if (roundsRemaining == 2) {
             roundName = 'Semifinal';
-        } else if (roundFromFinal == 2) {
+        } else if (roundsRemaining == 3) {
             roundName = 'Quarterfinal';
         }
 
         return {
             matchNumber: matchNumber,
-            label: 'E' + matchNumber,
+            label: '',
             roundIndex: roundIndex,
             roundName: roundName,
             slotIndex: slotIndex,
@@ -124,6 +124,7 @@
             winnerSeed: null,
             winnerAlliance: null,
             isBye: false,
+            hidden: false,
             source: {
                 red: null,
                 blue: null
@@ -142,6 +143,35 @@
         match[color + '1'] = '';
         match[color + '2'] = '';
         match[color + 'Seed'] = null;
+    }
+
+    function assignVisibleEliminationLabels(matches) {
+        let visibleCount = 1;
+
+        matches
+            .slice()
+            .sort((a, b) => {
+                if (a.roundIndex != b.roundIndex) {
+                    return a.roundIndex - b.roundIndex;
+                }
+                return a.slotIndex - b.slotIndex;
+            })
+            .forEach(match => {
+                if (match.hidden) {
+                    match.label = '';
+                } else {
+                    match.label = 'E' + visibleCount;
+                    visibleCount++;
+                }
+            });
+    }
+
+    function getVisibleEliminationMatches(tournamentData) {
+        if (!tournamentData.eliminations || !Array.isArray(tournamentData.eliminations.matches)) {
+            return [];
+        }
+
+        return tournamentData.eliminations.matches.filter(match => !match.hidden);
     }
 
     function createEliminationBracket(alliances) {
@@ -182,6 +212,12 @@
         rounds[0].forEach((match, index) => {
             setAllianceOnSide(match, 'red', seededSlots[index * 2]);
             setAllianceOnSide(match, 'blue', seededSlots[index * 2 + 1]);
+
+            const hasRed = Boolean(match.red1 && match.red2);
+            const hasBlue = Boolean(match.blue1 && match.blue2);
+            if (hasRed != hasBlue || (!hasRed && !hasBlue)) {
+                match.hidden = true;
+            }
         });
 
         for (let roundIndex = 1; roundIndex < rounds.length; roundIndex++) {
@@ -192,9 +228,11 @@
             });
         }
 
+        assignVisibleEliminationLabels(matches);
+
         return {
             matches: matches,
-            currentMatch: 1
+            currentMatch: matches[0].matchNumber
         };
     }
 
@@ -254,6 +292,8 @@
                 const hasRed = Boolean(match.red1 && match.red2);
                 const hasBlue = Boolean(match.blue1 && match.blue2);
 
+                match.hidden = hasRed != hasBlue || (!hasRed && !hasBlue);
+
                 if (hasRed && !hasBlue) {
                     match.complete = true;
                     match.redScore = 0;
@@ -273,8 +313,10 @@
                         partner: match.blue2
                     }, true);
                 } else if (!hasRed && !hasBlue) {
-                    match.complete = true;
-                    applyWinnerMetadata(match, null, true);
+                    match.complete = false;
+                    match.redScore = 0;
+                    match.blueScore = 0;
+                    applyWinnerMetadata(match, null, false);
                 }
 
                 return;
@@ -308,38 +350,34 @@
                 clearSide(match, 'blue');
             }
 
+            match.hidden = false;
             applyWinnerMetadata(match, determineWinner(match), false);
 
             const hasRed = Boolean(match.red1 && match.red2);
             const hasBlue = Boolean(match.blue1 && match.blue2);
 
-            if (hasRed && !hasBlue) {
-                match.complete = true;
-                applyWinnerMetadata(match, {
-                    seed: match.redSeed,
-                    captain: match.red1,
-                    partner: match.red2
-                }, true);
-            } else if (!hasRed && hasBlue) {
-                match.complete = true;
-                applyWinnerMetadata(match, {
-                    seed: match.blueSeed,
-                    captain: match.blue1,
-                    partner: match.blue2
-                }, true);
-            } else if (!hasRed && !hasBlue) {
-                match.complete = true;
-                applyWinnerMetadata(match, null, true);
+            if (hasRed && hasBlue) {
+                applyWinnerMetadata(match, determineWinner(match), false);
+            } else {
+                match.complete = false;
+                match.redScore = 0;
+                match.blueScore = 0;
+                applyWinnerMetadata(match, null, false);
             }
         });
 
-        const nextPlayableMatch = matches.find(match => {
+        assignVisibleEliminationLabels(matches);
+
+        const visibleMatches = getVisibleEliminationMatches(tournamentData);
+        const nextPlayableMatch = visibleMatches.find(match => {
             const ready = Boolean(match.red1 && match.red2 && match.blue1 && match.blue2);
             return ready && match.complete == false;
         });
 
         if (nextPlayableMatch) {
             eliminations.currentMatch = nextPlayableMatch.matchNumber;
+        } else if (visibleMatches.length > 0) {
+            eliminations.currentMatch = visibleMatches[visibleMatches.length - 1].matchNumber;
         } else if (matches.length > 0) {
             eliminations.currentMatch = matches[matches.length - 1].matchNumber;
         } else {
@@ -383,6 +421,7 @@
         buildRankings: buildRankings,
         ensureTournamentDataShape: ensureTournamentDataShape,
         regenerateEliminationBracket: regenerateEliminationBracket,
-        updateEliminationProgress: updateEliminationProgress
+        updateEliminationProgress: updateEliminationProgress,
+        getVisibleEliminationMatches: getVisibleEliminationMatches
     };
 })();

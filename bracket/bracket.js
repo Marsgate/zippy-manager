@@ -20,7 +20,7 @@ $(async function() {
     const tournamentData = await window.electronAPI.getTournamentData();
     window.tournamentUtils.ensureTournamentDataShape(tournamentData);
 
-    const matches = tournamentData.eliminations.matches;
+    const matches = window.tournamentUtils.getVisibleEliminationMatches(tournamentData);
     const bracket = $('#bracket');
     const status = $('#bracket-status');
     const viewTimerButton = $('#view-timer');
@@ -55,9 +55,6 @@ $(async function() {
             }
             if (match.complete) {
                 classes += ' complete';
-            }
-            if (match.isBye) {
-                classes += ' bye';
             }
 
             let card = '<div class="' + classes + '">';

@@ -2,15 +2,19 @@ $(async function(){
     let tournamentData = await window.electronAPI.getTournamentData();
     window.tournamentUtils.ensureTournamentDataShape(tournamentData);
 
+    function getEliminationMatches() {
+        return window.tournamentUtils.getVisibleEliminationMatches(tournamentData);
+    }
+
     const stageConfig = {
         qualification: {
-            matches: tournamentData.schedule,
+            getMatches: function() { return tournamentData.schedule; },
             page: 'schedule/schedule.html',
             buttonLabel: 'View Schedule',
             matchPrefix: 'Q'
         },
         elimination: {
-            matches: tournamentData.eliminations.matches,
+            getMatches: getEliminationMatches,
             page: 'bracket/bracket.html',
             buttonLabel: 'View Bracket',
             matchPrefix: 'E'
@@ -18,8 +22,15 @@ $(async function(){
     };
 
     let currentStage = tournamentData.currentStage == 'elimination' ? 'elimination' : 'qualification';
-    let currentStageData = stageConfig[currentStage];
     let currentMatch = null;
+
+    function getStageMatches() {
+        return stageConfig[currentStage].getMatches();
+    }
+
+    function getStageConfig() {
+        return stageConfig[currentStage];
+    }
 
     function getStageMatchNumber() {
         if (currentStage == 'qualification') {
@@ -37,7 +48,7 @@ $(async function(){
     }
 
     function findCurrentMatch(matchNumber) {
-        return currentStageData.matches.find(match => match.matchNumber == matchNumber) || null;
+        return getStageMatches().find(match => match.matchNumber == matchNumber) || null;
     }
 
     function saveTournamentData(preserveViewedMatch = false) {
@@ -54,9 +65,10 @@ $(async function(){
     }
 
     function refreshNavState() {
-        const matchIndex = currentStageData.matches.findIndex(match => match.matchNumber == getStageMatchNumber());
+        const stageMatches = getStageMatches();
+        const matchIndex = stageMatches.findIndex(match => match.matchNumber == getStageMatchNumber());
         $('#prev-match').prop('disabled', matchIndex <= 0);
-        $('#next-match').prop('disabled', matchIndex == -1 || matchIndex >= currentStageData.matches.length - 1);
+        $('#next-match').prop('disabled', matchIndex == -1 || matchIndex >= stageMatches.length - 1);
     }
 
     function updateMatchNumber(matchNumber) {
@@ -70,13 +82,13 @@ $(async function(){
             return;
         }
 
-        const label = currentMatch.label || (currentStageData.matchPrefix + currentMatch.matchNumber);
+        const label = currentMatch.label || (getStageConfig().matchPrefix + currentMatch.matchNumber);
         $('#match-number').text(label);
         $('#match-complete').prop('checked', currentMatch.complete);
         refreshNavState();
     }
 
-    $('#view-schedule').val(currentStageData.buttonLabel);
+    $('#view-schedule').val(getStageConfig().buttonLabel);
 
     let matchTime = 120;
     let currentTime = matchTime;
@@ -197,28 +209,30 @@ $(async function(){
 
     $('#view-schedule').on('click', function() {
         saveTournamentData(currentStage == 'elimination');
-        window.electronAPI.changePage(currentStageData.page);
+        window.electronAPI.changePage(getStageConfig().page);
     });
 
     $('#prev-match').on('click', function() {
-        const matchIndex = currentStageData.matches.findIndex(match => match.matchNumber == getStageMatchNumber());
+        const stageMatches = getStageMatches();
+        const matchIndex = stageMatches.findIndex(match => match.matchNumber == getStageMatchNumber());
         if (matchIndex > 0) {
-            updateMatchNumber(currentStageData.matches[matchIndex - 1].matchNumber);
+            updateMatchNumber(stageMatches[matchIndex - 1].matchNumber);
             saveTournamentData(true);
             resetScore(false);
         }
     });
 
     $('#next-match').on('click', function() {
-        const matchIndex = currentStageData.matches.findIndex(match => match.matchNumber == getStageMatchNumber());
-        if (matchIndex >= 0 && matchIndex < currentStageData.matches.length - 1) {
-            updateMatchNumber(currentStageData.matches[matchIndex + 1].matchNumber);
+        const stageMatches = getStageMatches();
+        const matchIndex = stageMatches.findIndex(match => match.matchNumber == getStageMatchNumber());
+        if (matchIndex >= 0 && matchIndex < stageMatches.length - 1) {
+            updateMatchNumber(stageMatches[matchIndex + 1].matchNumber);
             saveTournamentData(true);
             resetScore(false);
         }
     });
 
-    if (currentStage == 'elimination' && currentStageData.matches.length == 0) {
+    if (currentStage == 'elimination' && getStageMatches().length == 0) {
         $('#match-number').text('Unavailable');
         $('#match-complete').prop('checked', false);
         $('#btn-start, #btn-stop, #btn-reset, #btn-plus-blue, #btn-minus-blue, #btn-plus-red, #btn-minus-red').prop('disabled', true);

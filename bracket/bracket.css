@@ -45,16 +45,11 @@ h1,
 }
 
 .match-card.current {
-    border-color: green;
-    box-shadow: 0 0 0 3px rgba(0, 128, 0, 0.15);
+    background-color: lightgreen;
 }
 
 .match-card.complete {
     background: rgb(194, 232, 245);
-}
-
-.match-card.bye {
-    background: rgb(240, 240, 240);
 }
 
 .match-header {

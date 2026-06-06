@@ -9,9 +9,19 @@ function getSelectedTeams(alliances) {
     return selectedTeams;
 }
 
-function getNextCaptain(rankings, alliances) {
+function getRemainingTeams(rankings, alliances) {
     const selectedTeams = getSelectedTeams(alliances);
-    return rankings.find(team => !selectedTeams.includes(team.name)) || null;
+    return rankings.filter(team => !selectedTeams.includes(team.name));
+}
+
+function getNextCaptain(rankings, alliances) {
+    const remainingTeams = getRemainingTeams(rankings, alliances);
+
+    if (remainingTeams.length < 2) {
+        return null;
+    }
+
+    return remainingTeams[0];
 }
 
 function renderAlliances(alliancesTable, alliances) {
@@ -60,9 +70,8 @@ function renderRankings(rankingsTable, rankings, alliances, nextCaptain) {
 function renderPartnerOptions(partnerList, nextCaptain, rankings, alliances, saveSelection) {
     partnerList.empty();
 
-    const selectedTeams = getSelectedTeams(alliances);
-    const availablePartners = rankings.filter(team =>
-        team.name != nextCaptain.name && !selectedTeams.includes(team.name)
+    const availablePartners = getRemainingTeams(rankings, alliances).filter(team =>
+        team.name != nextCaptain.name
     );
 
     availablePartners.forEach(team => {
@@ -111,6 +120,7 @@ $(async function() {
 
     function refreshPage() {
         const nextCaptain = getNextCaptain(rankings, alliances);
+        const remainingTeams = getRemainingTeams(rankings, alliances);
         undoPickButton.prop('disabled', alliances.length == 0);
 
         renderAlliances(alliancesTable, alliances);
@@ -119,21 +129,14 @@ $(async function() {
         if (!nextCaptain) {
             currentSelection.hide();
             if (alliances.length >= 2) {
-                selectionStatus.text('Alliance selection is complete. The elimination bracket is ready.');
+                if (remainingTeams.length == 1) {
+                    selectionStatus.text('Alliance selection is complete. One team remains unpaired, and the elimination bracket is ready.');
+                } else {
+                    selectionStatus.text('Alliance selection is complete. The elimination bracket is ready.');
+                }
             } else {
                 selectionStatus.text('Alliance selection needs at least two alliances to build a bracket.');
             }
-            return;
-        }
-
-        const selectedTeams = getSelectedTeams(alliances);
-        const remainingPartners = rankings.filter(team =>
-            team.name != nextCaptain.name && !selectedTeams.includes(team.name)
-        );
-
-        if (remainingPartners.length == 0) {
-            currentSelection.hide();
-            selectionStatus.text('No valid partners remain for ' + nextCaptain.name + '.');
             return;
         }
 
