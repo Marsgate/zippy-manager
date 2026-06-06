@@ -3,19 +3,19 @@ let teamArray = [];
 
 $('#gen-btn').on('click', () => {
     // get data from DOM
-    let totalMatchCount = $('#match-count').val();
+    let totalMatchCount = parseInt($('#match-count').val(), 10);
     let teamList = $('#team-list').val();
 
     // remove white space
-    teamList.trim();
+    teamList = teamList.trim();
     teamList = teamList.replaceAll(' ', '');
     teamList = teamList.replaceAll('\t', ''); 
 
     // split teams by newline
-    let teamNameArray = teamList.split('\n');
+    let teamNameArray = teamList.split('\n').filter(teamName => teamName != '');
 
     // input validation
-    if (!totalMatchCount > 0) {
+    if (!Number.isInteger(totalMatchCount) || totalMatchCount <= 0) {
         $('#error').text('You must have at least 1 match.');
         return;
     }
@@ -23,10 +23,14 @@ $('#gen-btn').on('click', () => {
         $('#error').text('You must have at least 4 teams.');
         return;
     }
+    if (new Set(teamNameArray).size != teamNameArray.length) {
+        $('#error').text('Team names must be unique.');
+        return;
+    }
 
-    success = false;
-    extraMatchTolerance = 0
-    loopCount = 0;
+    let success = false;
+    let extraMatchTolerance = 0;
+    let loopCount = 0;
     do {
         success = scheduleGen(totalMatchCount, teamNameArray, extraMatchTolerance);
         loopCount ++;
@@ -52,6 +56,7 @@ function shuffleArray(array) {
 
 function findMatch(availableAlliances) {
     let match = [];
+    let selectedAlliances = [];
 
     availableAlliances = shuffleArray(availableAlliances);
 
@@ -72,12 +77,16 @@ function findMatch(availableAlliances) {
         // add the teams
         match.push(alliance.team1);
         match.push(alliance.team2);
-        alliance.playedCount ++;
+        selectedAlliances.push(alliance);
     });
 
     if (match.length < 4) {
         return null;
     }
+
+    selectedAlliances.forEach(alliance => {
+        alliance.playedCount ++;
+    });
 
     return match;
 }
@@ -95,10 +104,10 @@ function scheduleGen(totalMatchCount, teamNameArray, extraMatchTolerance) {
 
     // create an alliance array
     // an alliance is any combination of 2 teams
-    allianceArray = [];
+    let allianceArray = [];
     teamArray.forEach((team1, teamIndex1) => {
         teamArray.forEach((team2, teamIndex2) => {
-            alliance = {
+            let alliance = {
                 'team1': team1,
                 'team2': team2,
                 'playedCount': 0
@@ -193,9 +202,9 @@ function scheduleGen(totalMatchCount, teamNameArray, extraMatchTolerance) {
         } while (match == null);
 
         // shuffle the colors and team order for added randomness!
-        flipAllianceColors = (Math.random() > .5);
-        flipRedOrder = (Math.random() > .5);
-        flipBlueOrder = (Math.random() > .5);
+        let flipAllianceColors = (Math.random() > .5);
+        let flipRedOrder = (Math.random() > .5);
+        let flipBlueOrder = (Math.random() > .5);
 
         if (flipAllianceColors) {
             let temp = match[0];
@@ -252,7 +261,7 @@ function scheduleGen(totalMatchCount, teamNameArray, extraMatchTolerance) {
 
     let scheduleTable = $('#schedule');
 
-    success = (teamArray
+    let success = (teamArray
     .filter((team) => team.matchCount > totalMatchCount)
     .length <= extraMatchTolerance);
 
@@ -273,7 +282,7 @@ function scheduleGen(totalMatchCount, teamNameArray, extraMatchTolerance) {
 
         // write data to match schedule table
         schedule.forEach(matchData => {
-            element = '<tr>';
+            let element = '<tr>';
             element += '<td>' + matchData.matchNumber + '</td>';
             element += '<td>' + matchData.red1 + '</td>';
             element += '<td>' + matchData.red2 + '</td>';
@@ -291,9 +300,7 @@ function scheduleGen(totalMatchCount, teamNameArray, extraMatchTolerance) {
 }
 
 $('#create-btn').on('click', () => {
-    matchObjectArray = [];
-
-    tournamentData = {
+    let tournamentData = {
         'schedule': schedule,
         'teams': teamArray,
         'currentMatch': 1,
