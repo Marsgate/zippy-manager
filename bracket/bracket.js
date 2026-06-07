@@ -16,82 +16,78 @@ function getAllianceLabel(match, color) {
     };
 }
 
-$(async function() {
-    const tournamentData = await window.electronAPI.getTournamentData();
-    window.tournamentUtils.ensureTournamentDataShape(tournamentData);
+function buildAllianceRow(alliance, score) {
+    const row = window.domUtils.createElement('div', { className: 'alliance-row' });
+    row.appendChild(window.domUtils.createElement('span', { className: 'seed', text: alliance.seed }));
+    row.appendChild(window.domUtils.createElement('span', { className: 'team-list', text: alliance.teams }));
+    row.appendChild(window.domUtils.createElement('span', { className: 'score', text: score }));
+    return row;
+}
 
-    const matches = window.tournamentUtils.getVisibleEliminationMatches(tournamentData);
-    const bracket = $('#bracket');
-    const status = $('#bracket-status');
-    const viewTimerButton = $('#view-timer');
+function buildMatchCard(match, currentMatch) {
+    const red = getAllianceLabel(match, 'red');
+    const blue = getAllianceLabel(match, 'blue');
+    const classes = ['match-card'];
 
-    if (matches.length == 0) {
-        status.text('Complete alliance selection to generate the elimination bracket.');
-        viewTimerButton.prop('disabled', true);
-        return;
+    if (match.matchNumber === currentMatch) {
+        classes.push('current');
     }
 
-    const rounds = [];
-    matches.forEach(match => {
+    if (match.complete) {
+        classes.push('complete');
+    }
+
+    const card = window.domUtils.createElement('div', { className: classes.join(' ') });
+    const body = window.domUtils.createElement('div', { className: 'match-body' });
+
+    card.appendChild(window.domUtils.createElement('div', { className: 'match-header', text: match.label }));
+    body.appendChild(buildAllianceRow(red, match.redScore));
+    body.appendChild(buildAllianceRow(blue, match.blueScore));
+    card.appendChild(body);
+
+    return card;
+}
+
+function groupMatchesByRound(matches) {
+    return matches.reduce((rounds, match) => {
         if (!rounds[match.roundIndex]) {
             rounds[match.roundIndex] = [];
         }
+
         rounds[match.roundIndex].push(match);
-    });
+        return rounds;
+    }, []);
+}
 
-    rounds.forEach(roundMatches => {
-        roundMatches.sort((a, b) => a.slotIndex - b.slotIndex);
-        const roundName = roundMatches[0].roundName;
-        const column = $('<div class="round-column"></div>');
-        column.append('<h2>' + roundName + '</h2>');
+window.pageUtils.runTournamentPage(function({ data, save, goTo, setStageAndGoToTimer }) {
+    const matches = window.tournamentUtils.getVisibleEliminationMatches(data);
+    const bracket = $('#bracket');
+    const viewTimerButton = $('#view-timer');
 
-        roundMatches.forEach(match => {
-            const red = getAllianceLabel(match, 'red');
-            const blue = getAllianceLabel(match, 'blue');
-            let classes = 'match-card';
-
-            if (match.matchNumber == tournamentData.eliminations.currentMatch) {
-                classes += ' current';
-            }
-            if (match.complete) {
-                classes += ' complete';
-            }
-
-            let card = '<div class="' + classes + '">';
-            card += '<div class="match-header">' + match.label + '</div>';
-            card += '<div class="match-body">';
-            card += '<div class="alliance-row"><span class="seed">' + red.seed + '</span><span class="team-list">' + red.teams + '</span><span class="score">' + match.redScore + '</span></div>';
-            card += '<div class="alliance-row"><span class="seed">' + blue.seed + '</span><span class="team-list">' + blue.teams + '</span><span class="score">' + match.blueScore + '</span></div>';
-            card += '</div></div>';
-            column.append(card);
-        });
-
-        bracket.append(column);
-    });
-
-    const nextMatch = matches.find(match => !match.complete && match.red1 && match.red2 && match.blue1 && match.blue2);
-    if (nextMatch) {
-        status.text('Next match: ' + nextMatch.label + '.');
+    if (matches.length === 0) {
+        viewTimerButton.prop('disabled', true);
     } else {
-        const finalMatch = matches[matches.length - 1];
-        if (finalMatch.winnerAlliance) {
-            status.text('Champion: Seed ' + finalMatch.winnerAlliance.seed + ' (' + finalMatch.winnerAlliance.captain + ' / ' + finalMatch.winnerAlliance.partner + ').');
-        } else {
-            status.text('Bracket generated.');
-        }
+        groupMatchesByRound(matches).forEach(roundMatches => {
+            roundMatches.sort((a, b) => a.slotIndex - b.slotIndex);
+
+            const column = $(window.domUtils.createElement('div', { className: 'round-column' }));
+            column.append(window.domUtils.createElement('h2', { text: roundMatches[0].roundName }));
+
+            roundMatches.forEach(match => {
+                column.append(buildMatchCard(match, data.eliminations.currentMatch));
+            });
+
+            bracket.append(column);
+        });
     }
 
-    window.electronAPI.saveTournamentData(tournamentData);
-});
+    save();
 
-$('#view-schedule').on('click', function() {
-    window.electronAPI.changePage('schedule/schedule.html');
-});
+    $('#view-schedule').on('click', function() {
+        goTo('schedule/schedule.html');
+    });
 
-$('#view-timer').on('click', async function() {
-    const tournamentData = await window.electronAPI.getTournamentData();
-    window.tournamentUtils.ensureTournamentDataShape(tournamentData);
-    tournamentData.currentStage = 'elimination';
-    window.electronAPI.saveTournamentData(tournamentData);
-    window.electronAPI.changePage('timer/timer.html');
+    $('#view-timer').on('click', function() {
+        setStageAndGoToTimer('elimination');
+    });
 });

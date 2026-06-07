@@ -7,20 +7,6 @@ h1 {
     margin: 30px;
 }
 
-input {
-    padding: 4px 15px;
-    border: 4px solid #222;
-    border-radius: 5px;
-    background-color: white;
-    font-size: 16pt;
-    margin: 10px 10px 0 20px;
-    display: inline-block;
-}
-
-input:hover {
-    background-color: lightgray;
-}
-
 th, td {
     padding: 0 15px;
     border: 1px solid gray;

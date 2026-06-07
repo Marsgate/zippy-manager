@@ -1,114 +1,111 @@
 const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron/main');
 const path = require('node:path');
-const fs = require('fs');
+const fs = require('node:fs');
 
-win = null;
+const MENU_PAGE = 'menu/menu.html';
+const CREATE_PAGE = 'create/create.html';
+const SCHEDULE_PAGE = 'schedule/schedule.html';
 
+let win = null;
 let filepath = '';
 
-async function getTournamentData () {
+function loadPage(page) {
+    if (win) {
+        win.loadFile(page);
+    }
+}
+
+function readTournamentData() {
     return JSON.parse(fs.readFileSync(filepath, 'utf8'));
 }
 
-function saveTournamentData (data) {
-    fs.writeFileSync(filepath, JSON.stringify(data), 'utf-8');
+function saveTournamentData(data) {
+    fs.writeFileSync(filepath, JSON.stringify(data), 'utf8');
 }
 
-function loadTournament () {
-    try { 
-        filepath = dialog.showOpenDialogSync()[0];
-    } catch(e) {
-        console.log('Failed to load the file!');
-        return;
+function chooseFile(dialogMethod, options = {}) {
+    try {
+        return dialogMethod(options);
+    } catch (error) {
+        return null;
     }
-    win.loadFile('schedule/schedule.html');
 }
 
-function createWindow () {
+function chooseTournamentToLoad() {
+    const [selectedPath] = chooseFile(dialog.showOpenDialogSync) || [];
+    if (!selectedPath) {
+        return false;
+    }
+
+    filepath = selectedPath;
+    loadPage(SCHEDULE_PAGE);
+    return true;
+}
+
+function chooseTournamentSavePath() {
+    return chooseFile(dialog.showSaveDialogSync, {
+        filters: [{ name: 'text', extensions: ['txt'] }]
+    });
+}
+
+function createWindow() {
     win = new BrowserWindow({
         webPreferences: {
             preload: path.join(__dirname, 'preload.js')
         }
-    })
-    
+    });
+
     win.setFullScreen(true);
-
-    win.loadFile('menu/menu.html');
-
+    loadPage(MENU_PAGE);
 }
 
-app.whenReady().then(() => {
-    // top bar menu
-    const menu = Menu.buildFromTemplate([
+function createAppMenu() {
+    return Menu.buildFromTemplate([
         {
             label: 'File',
             submenu: [
-                {
-                    label: 'Create',
-                    click: function() {win.loadFile('create/create.html')}
-                },
-                {
-                    label: 'Load',
-                    click: loadTournament
-                },
-                {
-                    role: 'quit'
-                }
+                { label: 'Create', click: () => loadPage(CREATE_PAGE) },
+                { label: 'Load', click: chooseTournamentToLoad },
+                { role: 'quit' }
             ]
         },
         {
-            label: "Edit",
+            label: 'Edit',
             submenu: [
-                { label: "Undo", accelerator: "CmdOrCtrl+Z", selector: "undo:" },
-                { label: "Redo", accelerator: "Shift+CmdOrCtrl+Z", selector: "redo:" },
-                { type: "separator" },
-                { label: "Cut", accelerator: "CmdOrCtrl+X", selector: "cut:" },
-                { label: "Copy", accelerator: "CmdOrCtrl+C", selector: "copy:" },
-                { label: "Paste", accelerator: "CmdOrCtrl+V", selector: "paste:" },
-                { label: "Select All", accelerator: "CmdOrCtrl+A", selector: "selectAll:" }
+                { label: 'Undo', accelerator: 'CmdOrCtrl+Z', selector: 'undo:' },
+                { label: 'Redo', accelerator: 'Shift+CmdOrCtrl+Z', selector: 'redo:' },
+                { type: 'separator' },
+                { label: 'Cut', accelerator: 'CmdOrCtrl+X', selector: 'cut:' },
+                { label: 'Copy', accelerator: 'CmdOrCtrl+C', selector: 'copy:' },
+                { label: 'Paste', accelerator: 'CmdOrCtrl+V', selector: 'paste:' },
+                { label: 'Select All', accelerator: 'CmdOrCtrl+A', selector: 'selectAll:' }
             ]
         },
-        {
-            role: 'viewMenu'
-        },
-        {
-            role: 'windowMenu'
-        }
+        { role: 'viewMenu' },
+        { role: 'windowMenu' }
     ]);
-    Menu.setApplicationMenu(menu);
-    
-    // change page
-    ipcMain.on('change-page', function(event, url) {
-        win.loadFile(url)
-    });
+}
 
-    // create tournament
-    ipcMain.on('create-tournament', function(event, data) {
-        try { 
-            filepath = dialog.showSaveDialogSync({
-                filters: [
-                    { name: 'text', extensions: ['txt'] }
-                ]
-            });
-            saveTournamentData(data);
-            win.loadFile('schedule/schedule.html');
+app.whenReady().then(() => {
+    Menu.setApplicationMenu(createAppMenu());
 
-        } catch(e) {
-            console.log('Failed to save the file!');
+    ipcMain.on('change-page', (_event, page) => loadPage(page));
+
+    ipcMain.on('create-tournament', (_event, data) => {
+        const selectedPath = chooseTournamentSavePath();
+        if (!selectedPath) {
             return;
         }
-    });
 
-    ipcMain.on('load-tournament', function(event) {
-        loadTournament();
-    })
-
-    ipcMain.on('save-tournament-data', function(event, data) {
+        filepath = selectedPath;
         saveTournamentData(data);
+        loadPage(SCHEDULE_PAGE);
     });
 
-    ipcMain.handle('get-tournament-data', getTournamentData);
+    ipcMain.on('load-tournament', chooseTournamentToLoad);
+    ipcMain.on('save-tournament-data', (_event, data) => saveTournamentData(data));
+    ipcMain.handle('get-tournament-data', readTournamentData);
 
     createWindow();
-})
+});
 

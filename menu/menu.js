@@ -1,5 +1,5 @@
 $('#create-btn').on('click', () => {
-    window.electronAPI.changePage('create/create.html');
+    window.pageUtils.goTo('create/create.html');
 });
 
 $('#load-btn').on('click', () => {

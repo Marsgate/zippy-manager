@@ -1,55 +1,81 @@
 (function() {
-    function buildRankings(tournamentData) {
-        const rankings = [];
+    function createEmptyEliminations() {
+        return {
+            matches: [],
+            currentMatch: 1
+        };
+    }
 
-        tournamentData.teams.forEach(team => {
-            rankings.push({
-                name: team.name,
-                score: 0,
-                win: 0,
-                loss: 0,
-                tie: 0
-            });
-        });
+    function createTournamentData(schedule, teams) {
+        return {
+            schedule: schedule,
+            teams: teams,
+            currentMatch: 1,
+            alliances: [],
+            currentStage: 'qualification',
+            eliminations: createEmptyEliminations()
+        };
+    }
 
-        tournamentData.schedule.forEach(matchData => {
-            if (matchData.complete == false) {
+    function buildRankings(data) {
+        const rankings = data.teams.map(team => ({
+            name: team.name,
+            score: 0,
+            win: 0,
+            loss: 0,
+            tie: 0
+        }));
+
+        const rankingsByName = Object.fromEntries(rankings.map(team => [team.name, team]));
+
+        data.schedule.forEach(match => {
+            if (!match.complete) {
                 return;
             }
 
-            const red1 = rankings.find(team => team.name == matchData.red1);
-            const red2 = rankings.find(team => team.name == matchData.red2);
-            const blue1 = rankings.find(team => team.name == matchData.blue1);
-            const blue2 = rankings.find(team => team.name == matchData.blue2);
+            const redTeams = [rankingsByName[match.red1], rankingsByName[match.red2]];
+            const blueTeams = [rankingsByName[match.blue1], rankingsByName[match.blue2]];
 
-            red1.score += matchData.redScore;
-            red2.score += matchData.redScore;
-            blue1.score += matchData.blueScore;
-            blue2.score += matchData.blueScore;
-
-            if (matchData.redScore > matchData.blueScore) {
-                red1.win++;
-                red2.win++;
-                blue1.loss++;
-                blue2.loss++;
-            } else if (matchData.redScore < matchData.blueScore) {
-                red1.loss++;
-                red2.loss++;
-                blue1.win++;
-                blue2.win++;
-            } else {
-                red1.tie++;
-                red2.tie++;
-                blue1.tie++;
-                blue2.tie++;
+            if (match.redScore > match.blueScore) {
+                redTeams.forEach(team => {
+                    team.score += match.redScore;
+                    team.win++;
+                });
+                blueTeams.forEach(team => {
+                    team.score += match.blueScore;
+                    team.loss++;
+                });
+                return;
             }
+
+            if (match.redScore < match.blueScore) {
+                redTeams.forEach(team => {
+                    team.score += match.redScore;
+                    team.loss++;
+                });
+                blueTeams.forEach(team => {
+                    team.score += match.blueScore;
+                    team.win++;
+                });
+                return;
+            }
+
+            redTeams.forEach(team => {
+                team.score += match.redScore;
+                team.tie++;
+            });
+            blueTeams.forEach(team => {
+                team.score += match.blueScore;
+                team.tie++;
+            });
         });
 
         rankings.sort((a, b) => {
-            const wpDif = (b.win - a.win) * 2 + b.tie - a.tie;
-            if (wpDif != 0) {
-                return wpDif;
+            const winPointDifference = (b.win - a.win) * 2 + b.tie - a.tie;
+            if (winPointDifference !== 0) {
+                return winPointDifference;
             }
+
             return b.score - a.score;
         });
 
@@ -82,96 +108,71 @@
         return order;
     }
 
-    function getAllianceTeamNames(alliance) {
-        if (!alliance) {
-            return { red1: '', red2: '' };
+    function getRoundName(roundCount, roundIndex) {
+        const roundsRemaining = roundCount - roundIndex;
+
+        if (roundsRemaining === 1) {
+            return 'Final';
         }
 
-        return {
-            red1: alliance.captain,
-            red2: alliance.partner
-        };
-    }
-
-    function createEmptyEliminationMatch(matchNumber, roundIndex, slotIndex, roundSize) {
-        const totalRounds = Math.log2(roundSize);
-        const roundsRemaining = totalRounds - roundIndex;
-        let roundName = 'Round ' + (roundIndex + 1);
-
-        if (roundsRemaining == 1) {
-            roundName = 'Final';
-        } else if (roundsRemaining == 2) {
-            roundName = 'Semifinal';
-        } else if (roundsRemaining == 3) {
-            roundName = 'Quarterfinal';
+        if (roundsRemaining === 2) {
+            return 'Semifinal';
         }
 
-        return {
-            matchNumber: matchNumber,
-            label: '',
-            roundIndex: roundIndex,
-            roundName: roundName,
-            slotIndex: slotIndex,
-            red1: '',
-            red2: '',
-            blue1: '',
-            blue2: '',
-            redSeed: null,
-            blueSeed: null,
-            redScore: 0,
-            blueScore: 0,
-            complete: false,
-            winnerSeed: null,
-            winnerAlliance: null,
-            isBye: false,
-            hidden: false,
-            source: {
-                red: null,
-                blue: null
-            }
-        };
+        if (roundsRemaining === 3) {
+            return 'Quarterfinal';
+        }
+
+        return 'Round ' + (roundIndex + 1);
     }
 
-    function setAllianceOnSide(match, color, alliance) {
-        const teams = getAllianceTeamNames(alliance);
-        match[color + '1'] = teams.red1;
-        match[color + '2'] = teams.red2;
+    function sortMatches(a, b) {
+        if (a.roundIndex !== b.roundIndex) {
+            return a.roundIndex - b.roundIndex;
+        }
+
+        return a.slotIndex - b.slotIndex;
+    }
+
+    function setSide(match, color, alliance) {
+        match[color + '1'] = alliance ? alliance.captain : '';
+        match[color + '2'] = alliance ? alliance.partner : '';
         match[color + 'Seed'] = alliance ? alliance.seed : null;
     }
 
-    function clearSide(match, color) {
-        match[color + '1'] = '';
-        match[color + '2'] = '';
-        match[color + 'Seed'] = null;
+    function getSide(match, color) {
+        return {
+            seed: match[color + 'Seed'],
+            captain: match[color + '1'],
+            partner: match[color + '2']
+        };
     }
 
-    function assignVisibleEliminationLabels(matches) {
-        let visibleCount = 1;
-
-        matches
-            .slice()
-            .sort((a, b) => {
-                if (a.roundIndex != b.roundIndex) {
-                    return a.roundIndex - b.roundIndex;
-                }
-                return a.slotIndex - b.slotIndex;
-            })
-            .forEach(match => {
-                if (match.hidden) {
-                    match.label = '';
-                } else {
-                    match.label = 'E' + visibleCount;
-                    visibleCount++;
-                }
-            });
+    function sideIsReady(match, color) {
+        return Boolean(match[color + '1'] && match[color + '2']);
     }
 
-    function getVisibleEliminationMatches(tournamentData) {
-        if (!tournamentData.eliminations || !Array.isArray(tournamentData.eliminations.matches)) {
-            return [];
+    function clearResult(match) {
+        match.complete = false;
+        match.redScore = 0;
+        match.blueScore = 0;
+        match.winnerAlliance = null;
+        match.winnerSeed = null;
+        match.isBye = false;
+    }
+
+    function updateWinner(match, winnerAlliance, isBye) {
+        match.winnerAlliance = winnerAlliance;
+        match.winnerSeed = winnerAlliance ? winnerAlliance.seed : null;
+        match.isBye = isBye;
+    }
+
+    function determineWinner(match) {
+        if (!match.complete || match.redScore === match.blueScore) {
+            return null;
         }
 
-        return tournamentData.eliminations.matches.filter(match => !match.hidden);
+        return getSide(match, match.redScore > match.blueScore ? 'red' : 'blue');
     }
 
     function createEliminationBracket(alliances) {
@@ -182,53 +183,70 @@
         }));
 
         if (seededAlliances.length < 2) {
-            return {
-                matches: [],
-                currentMatch: 1
-            };
+            return createEmptyEliminations();
         }
 
         const bracketSize = nextPowerOfTwo(seededAlliances.length);
-        const seedOrder = buildSeedOrder(bracketSize);
-        const seededSlots = seedOrder.map(seed => seededAlliances.find(alliance => alliance.seed == seed) || null);
+        const roundCount = Math.log2(bracketSize);
+        const seededSlots = buildSeedOrder(bracketSize).map(seed =>
+            seededAlliances.find(alliance => alliance.seed === seed) || null
+        );
+
         const matches = [];
         const rounds = [];
         let matchNumber = 1;
 
         for (let roundSize = bracketSize, roundIndex = 0; roundSize > 1; roundSize /= 2, roundIndex++) {
             const matchCount = roundSize / 2;
-            const roundMatches = [];
+            const round = [];
 
             for (let slotIndex = 0; slotIndex < matchCount; slotIndex++) {
-                const match = createEmptyEliminationMatch(matchNumber, roundIndex, slotIndex, bracketSize);
-                roundMatches.push(match);
+                const match = {
+                    matchNumber: matchNumber,
+                    label: '',
+                    roundIndex: roundIndex,
+                    roundName: getRoundName(roundCount, roundIndex),
+                    slotIndex: slotIndex,
+                    red1: '',
+                    red2: '',
+                    blue1: '',
+                    blue2: '',
+                    redSeed: null,
+                    blueSeed: null,
+                    redScore: 0,
+                    blueScore: 0,
+                    complete: false,
+                    winnerSeed: null,
+                    winnerAlliance: null,
+                    isBye: false,
+                    hidden: false,
+                    source: { red: null, blue: null }
+                };
+
+                round.push(match);
                 matches.push(match);
                 matchNumber++;
             }
 
-            rounds.push(roundMatches);
+            rounds.push(round);
         }
 
         rounds[0].forEach((match, index) => {
-            setAllianceOnSide(match, 'red', seededSlots[index * 2]);
-            setAllianceOnSide(match, 'blue', seededSlots[index * 2 + 1]);
-
-            const hasRed = Boolean(match.red1 && match.red2);
-            const hasBlue = Boolean(match.blue1 && match.blue2);
-            if (hasRed != hasBlue || (!hasRed && !hasBlue)) {
-                match.hidden = true;
-            }
+            setSide(match, 'red', seededSlots[index * 2]);
+            setSide(match, 'blue', seededSlots[index * 2 + 1]);
+            const hasRed = sideIsReady(match, 'red');
+            const hasBlue = sideIsReady(match, 'blue');
+            match.hidden = hasRed !== hasBlue || (!hasRed && !hasBlue);
         });
 
         for (let roundIndex = 1; roundIndex < rounds.length; roundIndex++) {
             rounds[roundIndex].forEach((match, slotIndex) => {
-                const priorRound = rounds[roundIndex - 1];
-                match.source.red = priorRound[slotIndex * 2].matchNumber;
-                match.source.blue = priorRound[slotIndex * 2 + 1].matchNumber;
+                match.source.red = rounds[roundIndex - 1][slotIndex * 2].matchNumber;
+                match.source.blue = rounds[roundIndex - 1][slotIndex * 2 + 1].matchNumber;
             });
         }
 
-        assignVisibleEliminationLabels(matches);
+        assignVisibleLabels(matches);
 
         return {
             matches: matches,
@@ -236,192 +254,174 @@
         };
     }
 
-    function determineWinner(match) {
-        if (!match.complete) {
-            return null;
-        }
+    function assignVisibleLabels(matches) {
+        let labelNumber = 1;
 
-        if (match.redScore == match.blueScore) {
-            return null;
-        }
-
-        if (match.redScore > match.blueScore) {
-            return {
-                seed: match.redSeed,
-                captain: match.red1,
-                partner: match.red2
-            };
-        }
-
-        return {
-            seed: match.blueSeed,
-            captain: match.blue1,
-            partner: match.blue2
-        };
+        matches
+            .slice()
+            .sort(sortMatches)
+            .forEach(match => {
+                match.label = match.hidden ? '' : 'E' + labelNumber++;
+            });
     }
 
-    function applyWinnerMetadata(match, winnerAlliance, isBye) {
-        match.winnerAlliance = winnerAlliance;
-        match.winnerSeed = winnerAlliance ? winnerAlliance.seed : null;
-        match.isBye = isBye;
+    function getVisibleEliminationMatches(data) {
+        if (!data.eliminations || !Array.isArray(data.eliminations.matches)) {
+            return [];
+        }
+
+        return data.eliminations.matches.filter(match => !match.hidden);
     }
 
-    function updateEliminationProgress(tournamentData) {
-        const eliminations = tournamentData.eliminations;
+    function updateFirstRoundMatch(match) {
+        const hasRed = sideIsReady(match, 'red');
+        const hasBlue = sideIsReady(match, 'blue');
 
+        match.hidden = hasRed !== hasBlue || (!hasRed && !hasBlue);
+
+        if (hasRed && !hasBlue) {
+            clearResult(match);
+            match.complete = true;
+            updateWinner(match, getSide(match, 'red'), true);
+            return;
+        }
+
+        if (!hasRed && hasBlue) {
+            clearResult(match);
+            match.complete = true;
+            updateWinner(match, getSide(match, 'blue'), true);
+            return;
+        }
+
+        if (!hasRed && !hasBlue) {
+            clearResult(match);
+            return;
+        }
+
+        updateWinner(match, determineWinner(match), false);
+    }
+
+    function updateLaterRoundMatch(match, matchesByNumber) {
+        const redSource = matchesByNumber[match.source.red];
+        const blueSource = matchesByNumber[match.source.blue];
+        const redWinner = redSource ? redSource.winnerAlliance : null;
+        const blueWinner = blueSource ? blueSource.winnerAlliance : null;
+
+        const sidesStillMatchWinners = match.redSeed === (redWinner ? redWinner.seed : null)
+            && match.blueSeed === (blueWinner ? blueWinner.seed : null);
+        const resultExists = match.complete || match.redScore !== 0 || match.blueScore !== 0;
+
+        if (!sidesStillMatchWinners && resultExists) {
+            clearResult(match);
+        }
+
+        setSide(match, 'red', redWinner);
+        setSide(match, 'blue', blueWinner);
+        match.hidden = false;
+
+        const hasRed = sideIsReady(match, 'red');
+        const hasBlue = sideIsReady(match, 'blue');
+
+        if (!hasRed || !hasBlue) {
+            clearResult(match);
+            return;
+        }
+
+        updateWinner(match, determineWinner(match), false);
+    }
+
+    function setCurrentEliminationMatch(eliminations) {
+        const visibleMatches = eliminations.matches.filter(match => !match.hidden);
+        const nextPlayableMatch = visibleMatches.find(match =>
+            sideIsReady(match, 'red') && sideIsReady(match, 'blue') && !match.complete
+        );
+
+        if (nextPlayableMatch) {
+            eliminations.currentMatch = nextPlayableMatch.matchNumber;
+            return;
+        }
+
+        if (visibleMatches.length > 0) {
+            eliminations.currentMatch = visibleMatches[visibleMatches.length - 1].matchNumber;
+            return;
+        }
+
+        if (eliminations.matches.length > 0) {
+            eliminations.currentMatch = eliminations.matches[eliminations.matches.length - 1].matchNumber;
+            return;
+        }
+
+        eliminations.currentMatch = 1;
+    }
+
+    function updateEliminationProgress(data) {
+        const eliminations = data.eliminations;
         if (!eliminations || !Array.isArray(eliminations.matches)) {
             return;
         }
 
-        const matches = eliminations.matches;
         const matchesByNumber = {};
-        matches.forEach(match => {
+        eliminations.matches.forEach(match => {
             matchesByNumber[match.matchNumber] = match;
-            applyWinnerMetadata(match, determineWinner(match), false);
+            updateWinner(match, determineWinner(match), false);
         });
 
-        const sortedMatches = matches.slice().sort((a, b) => {
-            if (a.roundIndex != b.roundIndex) {
-                return a.roundIndex - b.roundIndex;
-            }
-            return a.slotIndex - b.slotIndex;
-        });
-
-        sortedMatches.forEach(match => {
-            if (match.roundIndex == 0) {
-                const hasRed = Boolean(match.red1 && match.red2);
-                const hasBlue = Boolean(match.blue1 && match.blue2);
-
-                match.hidden = hasRed != hasBlue || (!hasRed && !hasBlue);
-
-                if (hasRed && !hasBlue) {
-                    match.complete = true;
-                    match.redScore = 0;
-                    match.blueScore = 0;
-                    applyWinnerMetadata(match, {
-                        seed: match.redSeed,
-                        captain: match.red1,
-                        partner: match.red2
-                    }, true);
-                } else if (!hasRed && hasBlue) {
-                    match.complete = true;
-                    match.redScore = 0;
-                    match.blueScore = 0;
-                    applyWinnerMetadata(match, {
-                        seed: match.blueSeed,
-                        captain: match.blue1,
-                        partner: match.blue2
-                    }, true);
-                } else if (!hasRed && !hasBlue) {
-                    match.complete = false;
-                    match.redScore = 0;
-                    match.blueScore = 0;
-                    applyWinnerMetadata(match, null, false);
+        eliminations.matches
+            .slice()
+            .sort(sortMatches)
+            .forEach(match => {
+                if (match.roundIndex === 0) {
+                    updateFirstRoundMatch(match);
+                    return;
                 }
 
-                return;
-            }
+                updateLaterRoundMatch(match, matchesByNumber);
+            });
 
-            const redSource = matchesByNumber[match.source.red];
-            const blueSource = matchesByNumber[match.source.blue];
-            const priorWinnerSeeds = {
-                red: redSource && redSource.winnerAlliance ? redSource.winnerAlliance.seed : null,
-                blue: blueSource && blueSource.winnerAlliance ? blueSource.winnerAlliance.seed : null
-            };
-
-            const currentResultExists = match.complete || match.redScore != 0 || match.blueScore != 0;
-            const currentSidesMatchPriorWinners = match.redSeed == priorWinnerSeeds.red && match.blueSeed == priorWinnerSeeds.blue;
-
-            if (!currentSidesMatchPriorWinners && currentResultExists) {
-                match.redScore = 0;
-                match.blueScore = 0;
-                match.complete = false;
-            }
-
-            if (redSource && redSource.winnerAlliance) {
-                setAllianceOnSide(match, 'red', redSource.winnerAlliance);
-            } else {
-                clearSide(match, 'red');
-            }
-
-            if (blueSource && blueSource.winnerAlliance) {
-                setAllianceOnSide(match, 'blue', blueSource.winnerAlliance);
-            } else {
-                clearSide(match, 'blue');
-            }
-
-            match.hidden = false;
-            applyWinnerMetadata(match, determineWinner(match), false);
-
-            const hasRed = Boolean(match.red1 && match.red2);
-            const hasBlue = Boolean(match.blue1 && match.blue2);
-
-            if (hasRed && hasBlue) {
-                applyWinnerMetadata(match, determineWinner(match), false);
-            } else {
-                match.complete = false;
-                match.redScore = 0;
-                match.blueScore = 0;
-                applyWinnerMetadata(match, null, false);
-            }
-        });
-
-        assignVisibleEliminationLabels(matches);
-
-        const visibleMatches = getVisibleEliminationMatches(tournamentData);
-        const nextPlayableMatch = visibleMatches.find(match => {
-            const ready = Boolean(match.red1 && match.red2 && match.blue1 && match.blue2);
-            return ready && match.complete == false;
-        });
-
-        if (nextPlayableMatch) {
-            eliminations.currentMatch = nextPlayableMatch.matchNumber;
-        } else if (visibleMatches.length > 0) {
-            eliminations.currentMatch = visibleMatches[visibleMatches.length - 1].matchNumber;
-        } else if (matches.length > 0) {
-            eliminations.currentMatch = matches[matches.length - 1].matchNumber;
-        } else {
-            eliminations.currentMatch = 1;
-        }
+        assignVisibleLabels(eliminations.matches);
+        setCurrentEliminationMatch(eliminations);
     }
 
-    function ensureTournamentDataShape(tournamentData) {
-        if (!Array.isArray(tournamentData.alliances)) {
-            tournamentData.alliances = [];
+    function ensureTournamentDataShape(data) {
+        if (!Array.isArray(data.alliances)) {
+            data.alliances = [];
         }
 
-        if (!tournamentData.currentStage) {
-            tournamentData.currentStage = 'qualification';
+        if (!data.currentStage) {
+            data.currentStage = 'qualification';
         }
 
-        if (!tournamentData.eliminations) {
-            tournamentData.eliminations = {
-                matches: [],
-                currentMatch: 1
-            };
+        if (!data.eliminations) {
+            data.eliminations = createEmptyEliminations();
         }
 
-        if (!Array.isArray(tournamentData.eliminations.matches)) {
-            tournamentData.eliminations.matches = [];
+        if (!Array.isArray(data.eliminations.matches)) {
+            data.eliminations.matches = [];
         }
 
-        if (!tournamentData.eliminations.currentMatch) {
-            tournamentData.eliminations.currentMatch = 1;
+        if (!data.eliminations.currentMatch) {
+            data.eliminations.currentMatch = 1;
         }
 
-        updateEliminationProgress(tournamentData);
+        updateEliminationProgress(data);
     }
 
-    function regenerateEliminationBracket(tournamentData) {
-        tournamentData.eliminations = createEliminationBracket(tournamentData.alliances);
-        updateEliminationProgress(tournamentData);
+    function regenerateEliminationBracket(data) {
+        data.eliminations = createEliminationBracket(data.alliances);
+        updateEliminationProgress(data);
+    }
+
+    function resetEliminations(data) {
+        data.eliminations = createEmptyEliminations();
     }
 
     window.tournamentUtils = {
         buildRankings: buildRankings,
+        createTournamentData: createTournamentData,
         ensureTournamentDataShape: ensureTournamentDataShape,
+        getVisibleEliminationMatches: getVisibleEliminationMatches,
         regenerateEliminationBracket: regenerateEliminationBracket,
-        updateEliminationProgress: updateEliminationProgress,
-        getVisibleEliminationMatches: getVisibleEliminationMatches
+        resetEliminations: resetEliminations,
+        updateEliminationProgress: updateEliminationProgress
     };
 })();
