@@ -1,12 +1,14 @@
 let schedule = [];
 let teamArray = [];
+
+// We iterate through attempting to find matches with loosening rules
 const MATCH_SELECTION_RULES = [
-    { maxPlayedCount: 0, requireUnderTargetTeams: 2, avoidBackToBack: true },
-    { maxPlayedCount: 0, requireUnderTargetTeams: 1, avoidBackToBack: true },
-    { maxPlayedCount: 1, requireUnderTargetTeams: 1, avoidBackToBack: true },
-    { maxPlayedCount: 1, requireUnderTargetTeams: 0, avoidBackToBack: true },
-    { maxPlayedCount: 1, requireUnderTargetTeams: 0, avoidBackToBack: false },
-    { maxPlayedCount: Infinity, requireUnderTargetTeams: 0, avoidBackToBack: false }
+    { maxPartneredCount: 0, requireUnderTargetTeams: 2, avoidTripleMatch: true },
+    { maxPartneredCount: 0, requireUnderTargetTeams: 1, avoidTripleMatch: true },
+    { maxPartneredCount: 1, requireUnderTargetTeams: 1, avoidTripleMatch: true },
+    { maxPartneredCount: 1, requireUnderTargetTeams: 0, avoidTripleMatch: true },
+    { maxPartneredCount: 1, requireUnderTargetTeams: 0, avoidTripleMatch: false },
+    { maxPartneredCount: Infinity, requireUnderTargetTeams: 0, avoidTripleMatch: false }
 ];
 
 function normalizeTeamList(rawValue) {
@@ -58,11 +60,11 @@ function countTeamsBelowTarget(alliance, targetMatchCount) {
 }
 
 function matchesSelectionRule(alliance, rule, targetMatchCount, lastMatch, priorMatch) {
-    if (alliance.playedCount > rule.maxPlayedCount) {
+    if (alliance.playedCount > rule.maxPartneredCount) {
         return false;
     }
 
-    if (rule.avoidBackToBack && hasTeamInBackToBackMatches(alliance, lastMatch, priorMatch)) {
+    if (rule.avoidTripleMatch && hasTeamInBackToBackMatches(alliance, lastMatch, priorMatch)) {
         return false;
     }
 

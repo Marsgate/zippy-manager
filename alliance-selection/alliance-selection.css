@@ -26,3 +26,7 @@ input:disabled {
 #rankings tr.selected-team td {
     background-color: rgb(106, 133, 118);
 }
+
+#current-selection {
+    margin-top: 20px;
+}
