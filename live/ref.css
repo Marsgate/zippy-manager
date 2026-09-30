@@ -1,0 +1,2050 @@
+/* Referee controller: touch-first, for tablets (portrait and landscape) and phones (portrait). */
+
+/* The ref screen is a fixed, non-scrolling app surface: exactly the visible area
+   (dvh excludes Safari's toolbars), with no scrolling or rubber-band bounce. */
+html,
+body {
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+button {
+    font: inherit;
+    color: inherit;
+    border: none;
+    background: none;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+button:disabled {
+    opacity: 0.35;
+    pointer-events: none;
+}
+
+/* ---------- header ---------- */
+.bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: var(--bg-2);
+    border-bottom: 1px solid rgba(16, 42, 67, 0.12);
+}
+
+.bar-logo {
+    width: 48px;
+    height: 48px;
+    margin-right: 6px;
+    border-radius: 50%;
+    border: 3px solid var(--lg-orange);
+    background: #fff;
+}
+
+.nav-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 14px;
+    background: var(--panel-2);
+    font-size: 44px;
+    line-height: 1;
+    font-weight: 700;
+    border: var(--outline) solid var(--ink);
+}
+
+.match-title {
+    text-align: center;
+    min-width: 120px;
+}
+
+.match-label {
+    font-size: 30px;
+    font-weight: 800;
+}
+
+.match-stage {
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.bar-spacer {
+    flex: 1;
+}
+
+.conn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.conn .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--good);
+    box-shadow: 0 0 10px var(--good);
+}
+
+.conn.offline .dot {
+    background: var(--danger);
+    box-shadow: 0 0 10px var(--danger);
+}
+
+/* ---------- shared bits ---------- */
+.screen {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px 20px 20px;
+}
+
+.btn {
+    min-height: 72px;
+    padding: 0 28px;
+    border-radius: 16px;
+    background: var(--panel-2);
+    font-size: 22px;
+    font-weight: 700;
+    border: var(--outline) solid var(--ink);
+}
+
+.btn.primary {
+    background: var(--accent);
+    color: var(--accent-ink);
+}
+
+.btn.primary.pause {
+    background: var(--warn);
+    color: #2b1a00;
+}
+
+.btn:active,
+.tower-btn:active,
+.pen-btn:active,
+.undo-btn:active,
+.step:active,
+.tower-tile:active,
+.robot-tile:active,
+.mini button:active {
+    /* Individual `scale` (not `transform`) so it never overrides an element's positioning. */
+    scale: 0.94;
+    filter: brightness(0.88);
+}
+
+.teams {
+    display: flex;
+    gap: 8px;
+}
+
+.teams span {
+    flex: 1;
+    text-align: center;
+    padding: 8px 10px;
+    border-radius: 10px;
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+}
+
+.red .teams span { background: var(--red); }
+.blue .teams span { background: var(--blue); }
+
+/* ---------- live screen ---------- */
+.timer-strip {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 12px 24px;
+    background: var(--panel);
+    border-radius: var(--radius);
+    border: var(--outline) solid var(--ink);
+}
+
+.timer-strip .time {
+    font-size: 96px;
+    font-weight: 800;
+    line-height: 1;
+    min-width: 4ch;
+}
+
+.timer-strip .time.warn { color: var(--warn); }
+.timer-strip .time.danger { color: var(--danger); }
+
+.timer-buttons {
+    flex: 1;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.timer-buttons #btn-start {
+    min-width: 180px;
+}
+
+.alliances {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.side {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px;
+    border-radius: var(--radius);
+    background: var(--panel);
+    border: var(--outline) solid var(--ink);
+}
+
+.side.red { box-shadow: inset 0 6px 0 var(--red); }
+.side.blue { box-shadow: inset 0 6px 0 var(--blue); }
+
+.tower-btn {
+    flex: 1;
+    min-height: 0;
+    border-radius: 22px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #fff;
+    border: var(--outline) solid var(--ink);
+    transition: transform 0.08s;
+}
+
+.red .tower-btn { background: linear-gradient(180deg, var(--red), var(--red-deep)); }
+.blue .tower-btn { background: linear-gradient(180deg, var(--blue), var(--blue-deep)); }
+[data-theme="flat"] .red .tower-btn { background: var(--red); }
+[data-theme="flat"] .blue .tower-btn { background: var(--blue); }
+
+.tower-btn-icon {
+    width: 150px;
+    height: 114px;
+}
+
+.tower-btn-text {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.tower-btn-text strong {
+    font-size: 44px;
+    margin-right: 6px;
+}
+
+.counts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.count {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px;
+    border-radius: 12px;
+    background: var(--panel-inset);
+}
+
+.count-label {
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.count-value {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.count.penalty .count-value {
+    color: var(--penalty);
+}
+
+.count-value.bump {
+    animation: ref-bump 0.35s cubic-bezier(.2, 1.6, .4, 1);
+}
+
+@keyframes ref-bump {
+    40% { transform: scale(1.3); }
+}
+
+.penalty-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.pen-btn {
+    min-height: 88px;
+    border-radius: 16px;
+    font-size: 36px;
+    font-weight: 800;
+    background: var(--panel-2);
+    color: var(--penalty);
+    border: 3px solid var(--penalty);
+}
+
+.undo-btn {
+    min-height: 64px;
+    border-radius: 14px;
+    background: var(--panel-inset);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--muted);
+    border: var(--outline) solid var(--ink);
+}
+
+.undo-arrow {
+    font-size: 24px;
+}
+
+/* ---------- score screen ---------- */
+.score-head {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.head-side {
+    display: grid;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    background: var(--panel);
+    border: var(--outline) solid var(--ink);
+}
+
+/* Slots are positioned by data-home (fixed left/right); colors follow the alliance class, which flips. */
+.head-side { --accent: var(--red); }
+.head-side.blue { --accent: var(--blue); }
+.head-side[data-home="red"] { box-shadow: inset 6px 0 0 var(--accent); }
+.head-side[data-home="blue"] { box-shadow: inset -6px 0 0 var(--accent); }
+
+.head-side .teams {
+    flex-direction: column;
+    gap: 6px;
+}
+
+.head-side .teams span {
+    font-size: 16px;
+    padding: 4px 10px;
+}
+
+.mini-steppers {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mini {
+    display: grid;
+    grid-template-columns: 7.5em 52px 60px 52px;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.mini b {
+    text-align: center;
+    font-size: 26px;
+    color: var(--text);
+}
+
+/* Numbers that can grow (−112, 105) shrink to fit their box instead of spilling over. */
+.mini b,
+.head-total b,
+.count-value {
+    min-width: 0;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.mini button {
+    height: 52px;
+    border-radius: 12px;
+    background: var(--panel-2);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    border: var(--outline) solid var(--ink);
+}
+
+.head-total {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 96px;
+}
+
+.head-total span {
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.head-total b {
+    font-size: 60px;
+    line-height: 1;
+}
+
+.red .head-total b { color: var(--red); }
+.blue .head-total b { color: var(--blue); }
+
+.field-wrap {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 8px;
+    /* The field fits whatever height is left (cqh), so the footer never gets pushed off. */
+    container-type: size;
+}
+
+.field {
+    position: relative;
+    /* Lets field pieces size themselves relative to the field's width (cqw units). */
+    container-type: inline-size;
+    width: 100%;
+    /* Field height is half its width, and the tower tiles (11% of the width) stick out
+       half a tile above and below: 0.5w + 0.11w must fit in the available height. */
+    max-width: calc(100cqh / 0.62);
+    margin: 0 auto;
+    aspect-ratio: 2 / 1;
+    background: var(--field);
+    border: 10px solid var(--wall);
+    border-radius: 6px;
+    box-shadow: 0 0 0 var(--outline) var(--ink), 0 20px 40px rgba(0, 0, 0, 0.35);
+}
+
+.zone {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+}
+
+.zone.scoring { width: 10.4%; }
+.zone.start { width: 14.6%; border-right: 3px solid rgba(255, 255, 255, 0.55); }
+.zone.scoring { --accent: var(--red); background: rgba(255, 59, 74, 0.28); }
+.zone.scoring.blue { --accent: var(--blue); background: rgba(47, 140, 255, 0.28); }
+.zone.scoring[data-home="red"] { left: 0; border-right: 5px solid var(--accent); }
+.zone.scoring[data-home="blue"] { right: 0; border-left: 5px solid var(--accent); }
+.zone.start.red { left: 10.4%; }
+.zone.start.blue { right: 10.4%; border-right: none; border-left: 3px solid rgba(255, 255, 255, 0.55); }
+
+.hang-bar {
+    position: absolute;
+    top: -10px;
+    bottom: -10px;
+    left: 50%;
+    width: 16px;
+    transform: translateX(-50%);
+    background: var(--bar);
+    border-radius: 8px;
+    box-shadow: 0 0 0 3px var(--ink);
+}
+
+.zone-stepper {
+    position: absolute;
+    top: 50%;
+    width: 10.4%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.zone-stepper[data-home="red"] { left: 0; }
+.zone-stepper[data-home="blue"] { right: 0; }
+
+.step {
+    width: min(84px, 90%);
+    height: 72px;
+    border-radius: 16px;
+    background: var(--panel);
+    font-size: 40px;
+    font-weight: 800;
+    border: 3px solid var(--ink);
+}
+
+.red .step { color: var(--red); }
+.blue .step { color: var(--blue); }
+
+.zone-count {
+    position: relative;
+    width: 90%;
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+}
+
+.zone-hex {
+    position: absolute;
+    inset: 0;
+}
+
+.zone-count b {
+    position: relative;
+    font-size: 34px;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 2px 0 var(--ink), 0 0 8px var(--ink);
+}
+
+.tower-tile {
+    position: absolute;
+    width: 11%;
+    aspect-ratio: 1;
+    translate: -50% -50%;
+    border-radius: 18px;
+    background: var(--panel);
+    border: 4px solid var(--ink);
+    padding: 6px;
+}
+
+.tower-tile.t0 { left: 29.2%; top: 0; }
+.tower-tile.t1 { left: 70.8%; top: 0; }
+.tower-tile.t2 { left: 29.2%; top: 100%; }
+.tower-tile.t3 { left: 70.8%; top: 100%; }
+
+.tower-tile.owner-red { border-color: var(--red); box-shadow: 0 0 0 3px var(--ink), 0 0 28px var(--red-glow); }
+.tower-tile.owner-blue { border-color: var(--blue); box-shadow: 0 0 0 3px var(--ink), 0 0 28px var(--blue-glow); }
+.tower-tile { border-width: 6px; }
+
+
+.hangers {
+    position: absolute;
+    top: 50%;
+    display: flex;
+    flex-direction: column;
+    gap: max(8px, 1.4cqw);
+    transform: translateY(-50%);
+}
+
+.hangers[data-home="red"] { right: calc(50% + 18px); }
+.hangers[data-home="blue"] { left: calc(50% + 18px); }
+
+.robot-tile {
+    /* Sized to the field like the tower tiles, but never below a comfortable tap target. */
+    width: max(56px, 8cqw);
+    height: max(56px, 8cqw);
+    border-radius: 14px;
+    background: var(--panel);
+    border: 3px solid var(--ink);
+    padding: 6px;
+    opacity: 0.8;
+}
+
+.robot-tile.on {
+    opacity: 1;
+}
+
+.red .robot-tile.on { box-shadow: 0 0 0 4px var(--red), 0 0 24px var(--red-glow); }
+.blue .robot-tile.on { box-shadow: 0 0 0 4px var(--blue), 0 0 24px var(--blue-glow); }
+
+/* Hex count chip: "10/14" plus a hex icon. */
+.hex-budget {
+    align-self: center;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 56px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: var(--panel);
+    border: 3px solid var(--ink);
+    color: var(--text);
+    font-size: 24px;
+    white-space: nowrap;
+}
+
+.hex-budget b {
+    font-weight: 800;
+}
+
+.budget-hex {
+    width: 30px;
+    height: 30px;
+}
+
+.hex-budget.full {
+    background: var(--warn);
+    color: #2b1a00;
+}
+
+.hex-budget.full .budget-hex path {
+    fill: #fff;
+}
+
+.hex-budget.legacy {
+    font-size: 15px;
+    color: var(--muted);
+    white-space: normal;
+}
+
+.score-foot {
+    display: flex;
+    gap: 12px;
+}
+
+.score-foot .submit {
+    margin-left: auto;
+    padding: 0 32px;
+    font-size: 22px;
+}
+
+/* ---------- portrait tweaks ---------- */
+@media (orientation: portrait) {
+    .timer-strip {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .timer-strip .time {
+        font-size: 140px;
+    }
+
+    .timer-buttons {
+        justify-content: stretch;
+    }
+
+    .timer-buttons .btn {
+        flex: 1;
+    }
+
+    .score-head {
+        grid-template-columns: 1fr;
+    }
+}
+
+[data-theme="flat"] .tower-btn-icon {
+    width: min(150px, 12vh);
+    height: min(150px, 12vh);
+    padding: 22px;
+    border-radius: 50%;
+    background: #fff;
+    border: var(--outline) solid var(--ink);
+}
+
+
+/* ---------- header button, empty state, pairing, toast ---------- */
+.bar-btn {
+    min-height: 56px;
+    font-size: 18px;
+    padding: 0 18px;
+}
+
+.empty-card {
+    margin: auto;
+    text-align: center;
+    color: var(--muted);
+}
+
+.empty-card h2 {
+    color: var(--text);
+    font-size: 32px;
+}
+
+.pair-overlay {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 10;
+}
+
+.pair-card {
+    width: min(460px, 92vw);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 36px 32px;
+    border-radius: 24px;
+    background: var(--panel);
+    border: var(--outline) solid var(--ink);
+    text-align: center;
+}
+
+.pair-card h2 {
+    margin: 0;
+    font-size: 30px;
+}
+
+.pair-card p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 17px;
+    line-height: 1.4;
+}
+
+.pair-hex {
+    width: 110px;
+    height: 84px;
+}
+
+#pair-pin {
+    width: 100%;
+    font: inherit;
+    font-size: 48px;
+    font-weight: 800;
+    letter-spacing: 0.3em;
+    text-align: center;
+    padding: 12px;
+    border-radius: 16px;
+    border: 4px solid var(--ink);
+    background: var(--panel-2);
+    color: var(--text);
+}
+
+.pair-card .btn {
+    width: 100%;
+}
+
+.pair-error {
+    min-height: 22px;
+    color: var(--danger);
+    font-weight: 700;
+}
+
+.pair-view {
+    color: var(--muted);
+    font-size: 15px;
+}
+
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: 32px;
+    transform: translateX(-50%);
+    padding: 16px 26px;
+    border-radius: 16px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    z-index: 20;
+}
+
+/* Submitted matches stay readable but locked. */
+.is-final .tower-tile:disabled,
+.is-final .robot-tile:disabled {
+    opacity: 1;
+}
+
+.is-final .robot-tile:not(.on) {
+    opacity: 0.5;
+}
+
+.is-final .step,
+.is-final .mini button {
+    visibility: hidden;
+}
+
+/* Team names: always capitals, one line, never overflowing their chip. */
+.teams span {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-transform: uppercase;
+}
+
+/* ---------- short screens (landscape iPad Air/mini, Safari toolbar showing) ---------- */
+@media (max-height: 860px) {
+    .bar {
+        padding: 8px 16px;
+    }
+
+    .nav-btn {
+        width: 52px;
+        height: 52px;
+        font-size: 36px;
+    }
+
+    .bar-logo {
+        width: 40px;
+        height: 40px;
+    }
+
+    .bar-btn {
+        min-height: 46px;
+    }
+
+    .screen {
+        gap: 12px;
+        padding: 12px 16px 14px;
+    }
+
+    .btn {
+        min-height: 56px;
+        font-size: 19px;
+    }
+
+    .timer-strip {
+        padding: 8px 20px;
+    }
+
+    .timer-strip .time {
+        font-size: 64px;
+    }
+
+    .side {
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .teams span {
+        padding: 5px 0;
+        font-size: 18px;
+    }
+
+    .tower-btn-text {
+        font-size: 24px;
+    }
+
+    .tower-btn-text strong {
+        font-size: 34px;
+    }
+
+    .count {
+        padding: 4px;
+    }
+
+    .count-value {
+        font-size: 34px;
+    }
+
+    .pen-btn {
+        min-height: 60px;
+        font-size: 28px;
+    }
+
+    .undo-btn {
+        min-height: 48px;
+    }
+
+    .head-side {
+        padding: 8px 12px;
+    }
+
+    .mini button {
+        height: 44px;
+    }
+
+    .head-total b {
+        font-size: 46px;
+    }
+}
+
+/* ---------- server: shared page header (mirrors main.css .app-header) ---------- */
+.app-header {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0.7rem 1.5rem;
+    background: rgba(247, 245, 239, 0.94);
+    border-bottom: 1px solid rgba(16, 42, 67, 0.12);
+    color: var(--lg-text);
+}
+
+.app-header .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.app-header .logo {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    border: 3px solid var(--lg-orange);
+    background: #fff;
+}
+
+.app-header .brand strong,
+.app-header .brand small {
+    display: block;
+}
+
+.app-header .brand strong {
+    letter-spacing: -0.03em;
+}
+
+.app-header .brand small {
+    color: var(--lg-text-soft);
+    font-size: 0.82rem;
+}
+
+.app-header .nav-pills {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    gap: 0.35rem;
+}
+
+.app-header .nav-pills button,
+.app-header .nav-pills .active {
+    padding: 0.6rem 1rem;
+    border-radius: 999px;
+    color: var(--lg-text-soft);
+    font-size: 1rem;
+    font-weight: 650;
+}
+
+.app-header .nav-pills button:hover {
+    background: rgba(16, 42, 67, 0.08);
+}
+
+.app-header .nav-pills button:disabled {
+    color: #9aa8b4;
+    opacity: 1;
+}
+
+.app-header .nav-pills .active {
+    background: var(--lg-navy);
+    color: #fff;
+}
+
+.app-header .header-tools {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.app-header .tool-btn {
+    min-height: 2.5rem;
+    padding: 0.5rem 0.95rem;
+    border-radius: 0.65rem;
+    border: 2px solid var(--lg-border);
+    color: var(--lg-text);
+    font-weight: 800;
+}
+
+.app-header .tool-btn:hover {
+    background: var(--lg-surface);
+    border-color: var(--lg-navy);
+}
+
+/* The page header carries the logo, so the match bar below doesn't repeat it. */
+.in-app .bar-logo {
+    display: none;
+}
+
+/* ---------- not connected ---------- */
+.disconnected .match-title,
+.disconnected .nav-btn {
+    visibility: hidden;
+}
+
+.waiting-hex {
+    width: 120px;
+    height: 92px;
+    margin: 0 auto 12px;
+    animation: waiting-spin 2s ease-in-out infinite;
+}
+
+@keyframes waiting-spin {
+    50% { transform: rotateY(180deg); }
+}
+
+/* ---------- what the audience display shows ---------- */
+.tv-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 14px 0 6px;
+    border-radius: 999px;
+    background: var(--panel-2);
+    border: 1px solid var(--lg-border);
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.tv-label {
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: var(--lg-navy);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+}
+
+.tv-status.boards .tv-label {
+    background: var(--lg-orange);
+}
+
+/* ---------- check-in ---------- */
+.checkin-head h2 {
+    margin: 0;
+    font-size: 30px;
+}
+
+.checkin-head p {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 17px;
+}
+
+.checkin-grid {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.checkin-side {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    gap: 14px;
+    padding: 16px;
+    border-radius: var(--radius);
+    background: var(--panel);
+    border: var(--outline) solid var(--ink);
+}
+
+.checkin-side.red { box-shadow: inset 0 6px 0 var(--red); --side: var(--red); }
+.checkin-side.blue { box-shadow: inset 0 6px 0 var(--blue); --side: var(--blue); }
+
+.team-check {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-radius: 20px;
+    border: 3px dashed var(--side);
+    background: var(--panel-2);
+    color: var(--side);
+    transition: background 0.15s, color 0.15s;
+}
+
+.team-check:active {
+    scale: 0.96;
+}
+
+.check-box {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 4px solid currentColor;
+    display: grid;
+    place-items: center;
+}
+
+.check-box svg {
+    width: 42px;
+    height: 42px;
+}
+
+.check-name {
+    max-width: 100%;
+    padding: 0 12px;
+    font-size: 44px;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.check-state {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.8;
+}
+
+.team-check.ready {
+    border-style: solid;
+    background: var(--side);
+    color: #fff;
+}
+
+.team-check.ready .check-box {
+    background: #fff;
+    color: var(--side);
+    border-color: #fff;
+    animation: check-pop 0.28s ease-out;
+}
+
+@keyframes check-pop {
+    50% { scale: 1.2; }
+}
+
+.team-check:disabled {
+    opacity: 0.4;
+}
+
+.checkin-foot {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 88px;
+}
+
+.checkin-status {
+    flex: 1;
+    color: var(--muted);
+    font-size: 17px;
+}
+
+.checkin-status b {
+    color: var(--text);
+}
+
+.btn.subtle {
+    min-height: 56px;
+    font-size: 18px;
+    background: transparent;
+    border: 2px solid var(--lg-border);
+    color: var(--muted);
+}
+
+.btn.start-match {
+    min-height: 88px;
+    min-width: 320px;
+    font-size: 32px;
+    animation: start-in 0.3s ease-out;
+}
+
+@keyframes start-in {
+    from { opacity: 0; scale: 0.9; }
+}
+
+/* ---------- narrow screens (iPad mini portrait) ---------- */
+@media (max-width: 860px) {
+    .bar {
+        gap: 8px;
+        padding-inline: 12px;
+    }
+
+    #conn-text {
+        display: none;
+    }
+
+    .tv-status {
+        font-size: 14px;
+        padding-right: 10px;
+    }
+
+    .check-name {
+        font-size: 34px;
+    }
+
+    .checkin-foot {
+        flex-wrap: wrap;
+    }
+
+    .btn.start-match {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .bar-btn {
+        padding: 0 12px;
+        font-size: 15px;
+    }
+
+    .match-title {
+        min-width: 80px;
+    }
+}
+
+#tv-short,
+.phone-score {
+    display: none;
+}
+
+/* ---------- alliance selection (after qualifications) ---------- */
+.as-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.as-head h2 {
+    margin: 0;
+    font-size: 28px;
+}
+
+.as-head p {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 16px;
+}
+
+.as-undo {
+    flex: none;
+    min-height: 56px;
+    font-size: 18px;
+}
+
+.as-body {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+    gap: 16px;
+}
+
+.as-pick,
+.as-alliances {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    border-radius: var(--radius);
+    background: var(--panel);
+    border: var(--outline) solid var(--ink);
+}
+
+.as-label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.as-captain {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 18px;
+    border-radius: 14px;
+    background: var(--accent);
+    color: #fff;
+}
+
+.as-captain .as-label {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.as-captain-name {
+    min-width: 0;
+    font-size: 34px;
+    font-weight: 900;
+    white-space: nowrap;
+    overflow: hidden;
+    text-transform: uppercase;
+}
+
+.as-hint {
+    margin: 0;
+    color: var(--muted);
+    font-size: 15px;
+}
+
+/* The pool of teams can be long; it scrolls inside its panel, the page never does. */
+.as-grid {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-auto-rows: 64px;
+    align-content: start;
+    gap: 10px;
+}
+
+.as-grid[hidden] {
+    display: none;
+}
+
+.as-team {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 14px;
+    border-radius: 14px;
+    background: var(--panel-2);
+    border: 2px solid var(--lg-border);
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.as-team:active {
+    scale: 0.95;
+    background: var(--lg-teal-tint);
+}
+
+.as-rank {
+    color: var(--lg-orange);
+    font-size: 16px;
+}
+
+.as-name {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-transform: uppercase;
+}
+
+.as-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.as-list li {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+}
+
+.as-list .as-none {
+    display: block;
+    color: var(--muted);
+}
+
+.as-seed {
+    color: var(--lg-orange);
+    font-size: 20px;
+    font-weight: 900;
+    text-align: center;
+}
+
+.as-chip {
+    min-width: 0;
+    padding: 6px 8px;
+    border-radius: 10px;
+    background: var(--panel-2);
+    font-size: 16px;
+    font-weight: 800;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-transform: uppercase;
+}
+
+.as-chip.captain {
+    background: var(--accent);
+    color: #fff;
+}
+
+/* Once every alliance is set, the list takes the whole screen above Start bracket. */
+.alliance-screen.complete .as-pick {
+    display: none;
+}
+
+.alliance-screen.complete .as-body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+}
+
+.alliance-screen.complete .as-alliances {
+    max-height: none;
+}
+
+.btn.as-start {
+    min-height: 80px;
+    font-size: 28px;
+}
+
+/* ---------- phones (portrait): built for one-handed use ----------
+   Information sits at the top; everything the ref taps most is in the lower,
+   thumb-reachable part of the screen. */
+@media (max-width: 600px) and (orientation: portrait) {
+    /* Header: just the match, its arrows, and what the TV shows. */
+    .bar {
+        gap: 6px;
+        padding: 8px 10px;
+    }
+
+    .bar-logo,
+    .match-stage,
+    #btn-fullscreen {
+        display: none;
+    }
+
+    .nav-btn {
+        width: 48px;
+        height: 48px;
+        font-size: 32px;
+    }
+
+    .match-title {
+        min-width: 64px;
+    }
+
+    .match-label {
+        font-size: 26px;
+    }
+
+    .tv-status {
+        min-height: 36px;
+        font-size: 13px;
+        padding-right: 10px;
+    }
+
+    #tv-text {
+        display: none;
+    }
+
+    #tv-short {
+        display: inline;
+    }
+
+    .screen {
+        gap: 10px;
+        padding: 10px 10px 12px;
+    }
+
+    .btn {
+        min-height: 56px;
+        padding: 0 12px;
+        font-size: 17px;
+        border-radius: 14px;
+    }
+
+    .teams span {
+        padding: 4px 6px;
+        font-size: 15px;
+    }
+
+    /* Alliance selection: picks on top, alliances in a short list, Start at the bottom. */
+    .as-head h2 {
+        font-size: 22px;
+    }
+
+    .as-head p {
+        font-size: 13px;
+    }
+
+    .as-undo {
+        min-height: 48px;
+        padding: 0 12px;
+        font-size: 15px;
+    }
+
+    .as-body {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr) auto;
+        gap: 10px;
+    }
+
+    .as-pick,
+    .as-alliances {
+        padding: 10px;
+        gap: 8px;
+    }
+
+    .as-alliances {
+        max-height: 28dvh;
+    }
+
+    .as-captain-name {
+        font-size: 26px;
+    }
+
+    .as-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-auto-rows: 56px;
+        gap: 8px;
+    }
+
+    .as-team {
+        font-size: 19px;
+    }
+
+    .btn.as-start {
+        min-height: 68px;
+        font-size: 24px;
+    }
+
+    /* Check-in: one full-width row per team, Start at the bottom. */
+    .checkin-head h2 {
+        font-size: 22px;
+    }
+
+    .checkin-head p {
+        font-size: 14px;
+    }
+
+    .checkin-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .checkin-side {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 8px 8px 8px 14px;
+    }
+
+    .checkin-side.red { box-shadow: inset 6px 0 0 var(--red); }
+    .checkin-side.blue { box-shadow: inset 6px 0 0 var(--blue); }
+
+    .team-check {
+        flex: 1;
+        flex-direction: row;
+        justify-content: flex-start;
+        gap: 14px;
+        padding: 0 16px;
+        border-radius: 14px;
+    }
+
+    .check-box {
+        flex: none;
+        width: 44px;
+        height: 44px;
+        border-width: 3px;
+    }
+
+    .check-box svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    .check-name {
+        flex: 1;
+        min-width: 0;
+        padding: 0;
+        font-size: 28px;
+        text-align: left;
+    }
+
+    .check-state {
+        font-size: 11px;
+    }
+
+    .checkin-foot {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        min-height: 0;
+    }
+
+    .checkin-status {
+        text-align: center;
+        font-size: 14px;
+    }
+
+    .btn.start-match {
+        min-height: 72px;
+        min-width: 0;
+        font-size: 26px;
+    }
+
+    /* Live match: timer on top, both alliances in the middle, timer buttons at the bottom. */
+    .live-screen .timer-strip {
+        display: contents;
+    }
+
+    .live-screen .time {
+        order: 0;
+        text-align: center;
+        font-size: 64px;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .alliances {
+        order: 1;
+        min-height: 0;
+        gap: 8px;
+    }
+
+    .timer-buttons {
+        order: 2;
+        flex: none;
+        gap: 8px;
+    }
+
+    .timer-buttons .btn {
+        flex: 1;
+        min-height: 60px;
+    }
+
+    .timer-buttons #btn-start {
+        min-width: 0;
+        flex: 1.4;
+    }
+
+    .side {
+        min-height: 0;
+        gap: 8px;
+        padding: 8px;
+    }
+
+    .tower-btn {
+        gap: 6px;
+        border-radius: 16px;
+    }
+
+    [data-theme="flat"] .tower-btn-icon {
+        width: 76px;
+        height: 76px;
+        padding: 14px;
+    }
+
+    .tower-btn-text {
+        font-size: 17px;
+    }
+
+    .tower-btn-text strong {
+        font-size: 28px;
+    }
+
+    .counts {
+        gap: 6px;
+    }
+
+    .count {
+        padding: 4px 2px;
+    }
+
+    .count-label {
+        font-size: 10px;
+        letter-spacing: 0.06em;
+    }
+
+    .count-value {
+        font-size: 28px;
+    }
+
+    .penalty-row {
+        gap: 6px;
+    }
+
+    .pen-btn {
+        min-height: 56px;
+        font-size: 22px;
+        border-width: 2px;
+        border-radius: 12px;
+    }
+
+    .undo-btn {
+        min-height: 44px;
+        font-size: 13px;
+    }
+
+    .undo-arrow {
+        font-size: 18px;
+    }
+
+    /* Field scoring: compact alliance summaries side by side. */
+    .score-head {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    /* Teams stacked beside the alliance total, adjusters underneath. */
+    .head-side {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: "teams total" "minis minis";
+        align-items: center;
+        gap: 6px 8px;
+        padding: 8px;
+    }
+
+    .head-side .teams {
+        grid-area: teams;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .head-side .teams span {
+        font-size: 12px;
+        padding: 2px 4px;
+    }
+
+    .head-total {
+        grid-area: total;
+        min-width: 0;
+        max-width: 96px;
+    }
+
+    .head-total span {
+        display: none;
+    }
+
+    .head-total b {
+        font-size: 40px;
+    }
+
+    .mini-steppers {
+        grid-area: minis;
+        gap: 4px;
+    }
+
+    .mini {
+        grid-template-columns: minmax(0, 1fr) 34px 30px 34px;
+        gap: 3px;
+        font-size: 9px;
+        letter-spacing: -0.02em;
+    }
+
+    .mini b {
+        font-size: 20px;
+    }
+
+    .mini button {
+        height: 38px;
+        font-size: 22px;
+        border-radius: 10px;
+    }
+
+    /* Field elements as a list: the map is too small to tap on a phone. */
+    .field-wrap {
+        display: none;
+    }
+
+    .phone-score {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .ps-row {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 8px;
+        border-radius: var(--radius);
+        background: var(--panel);
+        border: var(--outline) solid var(--ink);
+    }
+
+    .ps-tower-row {
+        flex: 1.6;
+    }
+
+    .ps-label {
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    .ps-label small {
+        margin-left: 6px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        text-transform: none;
+    }
+
+    .ps-pair {
+        flex: 1;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        /* Rows take the space they're given, never the size of their tiles. */
+        grid-template-rows: minmax(0, 1fr);
+        gap: 8px;
+    }
+
+    .ps-zone {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        padding: 4px;
+        border-radius: 12px;
+        background: var(--panel-2);
+    }
+
+    .ps-zone .step {
+        width: 48px;
+        height: 100%;
+        max-height: 60px;
+        font-size: 28px;
+        border-radius: 12px;
+        border-width: 2px;
+    }
+
+    .ps-count {
+        position: relative;
+        height: 100%;
+        max-height: 60px;
+        aspect-ratio: 1;
+        display: grid;
+        place-items: center;
+    }
+
+    .ps-count b {
+        position: relative;
+        font-size: 24px;
+        font-weight: 900;
+        color: #fff;
+        text-shadow: 0 2px 0 var(--ink), 0 0 8px var(--ink);
+    }
+
+    /* The four towers as a mini map: two per side wall, the hanging bar between. */
+    .ps-towers {
+        flex: 1;
+        min-height: 0;
+        display: grid;
+        /* Same layout as the tablet's field: top wall, then bottom wall. */
+        grid-template-columns: 1fr 12px 1fr;
+        grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-areas: "t0 bar t1" "t2 bar t3";
+        gap: 6px 16px;
+        align-items: center;
+    }
+
+    .ps-towers {
+        container-type: size;
+    }
+
+    .ps-towers .tower-tile {
+        position: static;
+        translate: none;
+        width: auto;
+        /* As tall as the row allows, but never wider than its column (2 columns + bar). */
+        height: min(100%, 72px, calc((100cqw - 44px) / 2));
+        max-height: none;
+        aspect-ratio: 1;
+        justify-self: center;
+        border-width: 4px;
+        border-radius: 12px;
+        padding: 4px;
+    }
+
+    .ps-towers [data-index="0"] { grid-area: t0; }
+    .ps-towers [data-index="1"] { grid-area: t1; }
+    .ps-towers [data-index="2"] { grid-area: t2; }
+    .ps-towers [data-index="3"] { grid-area: t3; }
+
+    .ps-bar {
+        grid-area: bar;
+        align-self: stretch;
+        border-radius: 6px;
+        background: var(--bar);
+        box-shadow: 0 0 0 2px var(--ink);
+    }
+
+    .ps-hangers {
+        position: static;
+        transform: none;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        padding: 4px;
+        border-radius: 12px;
+        background: var(--panel-2);
+    }
+
+    .ps-hangers .robot-tile {
+        width: auto;
+        height: 100%;
+        max-height: 64px;
+        aspect-ratio: 1;
+        border-radius: 12px;
+        padding: 4px;
+    }
+
+    /* Footer: small tools on one row, the main button full width underneath. */
+    .score-foot {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .score-foot .btn {
+        min-height: 50px;
+        font-size: 16px;
+    }
+
+    .hex-budget {
+        margin-left: auto;
+        min-height: 50px;
+        padding: 0 12px;
+        font-size: 18px;
+        border-width: 2px;
+    }
+
+    .budget-hex {
+        width: 22px;
+        height: 22px;
+    }
+
+    .score-foot .submit {
+        order: 10;
+        flex-basis: 100%;
+        margin-left: 0;
+        min-height: 64px;
+        font-size: 20px;
+    }
+
+    /* Once submitted, the choices are reopen, replay, or move on. */
+    .is-final .flip-btn,
+    .is-final .hex-budget {
+        display: none;
+    }
+
+    .is-final .score-foot .btn:not(.submit) {
+        flex: 1;
+    }
+}
+
+/* Short phones (Safari toolbars showing): towers in one row, red-side pair | blue-side pair. */
+@media (max-width: 600px) and (orientation: portrait) and (max-height: 760px) {
+    .ps-towers {
+        grid-template-columns: 1fr 1fr 10px 1fr 1fr;
+        grid-template-rows: minmax(0, 1fr);
+        grid-template-areas: "t0 t2 bar t1 t3";
+        gap: 8px;
+    }
+
+    .ps-towers .tower-tile {
+        height: min(100%, 72px, calc((100cqw - 42px) / 4));
+    }
+
+    .ps-tower-row {
+        flex: 1;
+    }
+
+    .ps-row {
+        gap: 4px;
+        padding: 6px 8px;
+    }
+
+    .mini button {
+        height: 34px;
+    }
+}
+
+/* Very short phones (iPhone SE with Safari toolbars): every pixel of height counts. */
+@media (max-width: 600px) and (orientation: portrait) and (max-height: 620px) {
+    [data-theme="flat"] .tower-btn-icon {
+        display: none;
+    }
+
+    .live-screen .time {
+        font-size: 52px;
+    }
+
+    /* Labels sit to the left of each row instead of above it. */
+    .ps-row {
+        flex-direction: row;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .ps-label {
+        flex: none;
+        width: 58px;
+        align-self: center;
+        font-size: 11px;
+        line-height: 1.2;
+    }
+
+    .ps-label small {
+        display: none;
+    }
+
+    .ps-pair,
+    .ps-towers {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .ps-zone {
+        gap: 4px;
+        padding: 2px;
+    }
+
+    .ps-zone .step {
+        width: 36px;
+    }
+
+    .ps-count {
+        max-height: 40px;
+    }
+
+    .ps-count b {
+        font-size: 20px;
+    }
+
+    /* Submitted: reopen and replay share a row, next match gets its own. */
+    .is-final .score-foot {
+        flex-wrap: wrap;
+    }
+
+    .is-final .score-foot .submit {
+        flex-basis: 100%;
+    }
+
+    /* Footer on one row, Submit taking the rest of it. */
+    .score-foot {
+        flex-wrap: nowrap;
+    }
+
+    .score-foot .btn {
+        padding: 0 10px;
+    }
+
+    .hex-budget {
+        display: none;
+    }
+
+    .score-foot .submit {
+        flex: 1;
+        flex-basis: auto;
+        min-height: 50px;
+        font-size: 17px;
+    }
+}

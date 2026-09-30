@@ -9,42 +9,60 @@
         <script src="../jquery.min.js"></script>
         <script src="../shared/dom.js"></script>
         <script src="../shared/tournament.js"></script>
+        <script src="../shared/schedule.js"></script>
         <script src="../shared/page.js"></script>
     </head>
     <body>
-        <div class="row">
-            <div class="column1">
-                <h1>Create a tournament</h1>
-
-                <p id="error"></p>
-
-                <div id="match-count-container">
-                    <label for="match-count">Number of qualification matches per team: </label>
-                    <input type="text" id="match-count"/>
-                </div>
-
-                <div id="team-list-container">
-                    <label for="team-list">Team list</label>
-                    <textarea id="team-list"></textarea>
-                </div>
-
-                <input type="button" value="Generate Match Schedule" id="gen-btn"/>
-                <input type="button" value="Create Tournament" id="create-btn" hidden/>
+        <header class="app-header">
+            <div class="brand">
+                <img class="logo" src="../shared/images/logo.png" alt="">
+                <span><strong>Loosey Goosey Robotics</strong><small>Zippy Manager</small></span>
             </div>
-            <div class="column2">
-                <div id="schedule-container" hidden>
-                    <table id='schedule'>
-                        <tr>
-                            <th>Match#</th>
-                            <th>Red 1</th>
-                            <th>Red 2</th>
-                            <th>Blue 1</th>
-                            <th>Blue 2</th>
-                        </tr>
-                    </table>
-                </div>
+            <div class="header-tools">
+                <input type="button" class="btn-outline" value="Home" data-goto="menu/menu.html"/>
             </div>
-        </div>
+        </header>
+
+        <main class="page">
+            <p class="eyebrow">New tournament</p>
+            <h1 class="page-title">Create a tournament</h1>
+            <div class="create-grid">
+                <section class="card">
+                    <h2>Teams &amp; matches</h2>
+
+                    <label class="field-label" for="match-count">Qualification matches per team</label>
+                    <input type="text" id="match-count" inputmode="numeric" placeholder="e.g. 5"/>
+                    <div class="match-suggest" id="match-suggest" hidden></div>
+
+                    <label class="field-label" for="team-list">Team list <span class="hint">one per line, up to 8 characters</span></label>
+                    <textarea id="team-list" placeholder="GOOSE&#10;HONK&#10;JAMBAND"></textarea>
+
+                    <p id="error"></p>
+
+                    <div class="create-actions">
+                        <input type="button" class="btn-dark" value="Generate match schedule" id="gen-btn"/>
+                        <input type="button" value="Create tournament" id="create-btn" hidden/>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2>Schedule preview</h2>
+                    <p class="muted" id="schedule-empty">Enter your teams and generate a schedule to preview it here. You can regenerate as many times as you like before creating the tournament.</p>
+                    <div id="schedule-container" hidden>
+                        <table id="schedule">
+                            <tr>
+                                <th>Match</th>
+                                <th>Red 1</th>
+                                <th>Red 2</th>
+                                <th>Blue 1</th>
+                                <th>Blue 2</th>
+                            </tr>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+
         <script src="./create.js"></script>
     </body>
 </html>

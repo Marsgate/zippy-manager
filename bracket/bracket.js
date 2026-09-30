@@ -41,8 +41,13 @@ function buildMatchCard(match, currentMatch) {
     const body = window.domUtils.createElement('div', { className: 'match-body' });
 
     card.appendChild(window.domUtils.createElement('div', { className: 'match-header', text: match.label }));
-    body.appendChild(buildAllianceRow(red, match.redScore));
-    body.appendChild(buildAllianceRow(blue, match.blueScore));
+    const redRow = buildAllianceRow(red, match.redScore);
+    const blueRow = buildAllianceRow(blue, match.blueScore);
+    if (match.complete && match.redScore !== match.blueScore) {
+        (match.redScore > match.blueScore ? blueRow : redRow).classList.add('lost');
+    }
+    body.appendChild(redRow);
+    body.appendChild(blueRow);
     card.appendChild(body);
 
     return card;
@@ -59,7 +64,7 @@ function groupMatchesByRound(matches) {
     }, []);
 }
 
-window.pageUtils.runTournamentPage(function({ data, save, goTo, setStageAndGoToTimer }) {
+window.pageUtils.runTournamentPage(function({ data, save, goTo, setStageAndGoToTimer, playMatch }) {
     const matches = window.tournamentUtils.getVisibleEliminationMatches(data);
     const bracket = $('#bracket');
     const viewTimerButton = $('#view-timer');
@@ -82,6 +87,15 @@ window.pageUtils.runTournamentPage(function({ data, save, goTo, setStageAndGoToT
     }
 
     save();
+
+    // The next match whose alliances are both known and that hasn't been played.
+    const nextMatch = matches.find(match => match.red1 && match.red2 && match.blue1 && match.blue2 && !match.complete);
+    $('#play-next')
+        .val(nextMatch ? 'Play ' + nextMatch.label + ' ›' : (matches.length ? 'Bracket complete' : 'Bracket not started'))
+        .prop('disabled', !nextMatch)
+        .on('click', function() {
+            playMatch('elimination', nextMatch.matchNumber);
+        });
 
     $('#view-schedule').on('click', function() {
         goTo('schedule/schedule.html');

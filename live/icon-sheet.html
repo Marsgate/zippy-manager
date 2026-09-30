@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Icon Sheet</title>
+    <link rel="stylesheet" href="theme.css">
+    <style>
+        body { padding: 24px; }
+        .sheet { display: grid; grid-template-columns: repeat(6, 150px); gap: 20px; margin-bottom: 30px; }
+        .cell { background: var(--panel); border-radius: var(--radius); padding: 14px; text-align: center; font-size: 13px; color: var(--muted); }
+        .cell .art { height: 110px; margin-bottom: 8px; }
+        h2 { font-size: 18px; margin: 0 0 12px; }
+    </style>
+    <script src="icons.js"></script>
+</head>
+<body>
+    <div id="themes"></div>
+    <script>
+        const items = [
+            ['hex red', Icons.hex({ top: 'red', bottom: 'blue' })],
+            ['hex blue', Icons.hex({ top: 'blue', bottom: 'red' })],
+            ['hex flat', Icons.hexFlat({ color: 'red' })],
+            ['tower empty', Icons.tower()],
+            ['tower red', Icons.tower({ hex: 'red' })],
+            ['tower blue', Icons.tower({ hex: 'blue' })],
+            ['robot hanging', Icons.robot({ color: 'red' })],
+            ['robot parked', Icons.robot({ color: 'blue', hanging: false })],
+            ['penalty', Icons.flag()],
+            ['zone red', Icons.zone({ color: 'red' })],
+            ['zone blue', Icons.zone({ color: 'blue' })]
+        ];
+        const root = document.getElementById('themes');
+        for (const theme of ['arena', 'flat']) {
+            const section = document.createElement('section');
+            section.dataset.theme = theme;
+            section.style.cssText = 'background: var(--bg); color: var(--text); padding: 20px; border-radius: 12px; margin-bottom: 20px;';
+            section.innerHTML = '<h2>' + theme + '</h2><div class="sheet">' +
+                items.map(([label, svg]) => '<div class="cell"><div class="art">' + svg + '</div>' + label + '</div>').join('') +
+                '</div>';
+            root.appendChild(section);
+        }
+    </script>
+</body>
+</html>

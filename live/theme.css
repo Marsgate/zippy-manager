@@ -1,0 +1,107 @@
+@import url("../shared/brand.css");
+
+/* Design tokens for the live pages, built on the Loosey Goosey brand kit.
+   "arena" is the dark audience display; "flat" is the bright ref controller on phones and tablets. */
+
+:root,
+[data-theme="arena"] {
+    --bg: var(--lg-navy-deep);
+    --bg-2: #0b243b;
+    --panel: #12304d;
+    --panel-2: #1a3d5f;
+    --panel-inset: #0a2238;
+    --text: #ffffff;
+    --muted: #93a9bc;
+    --ink: var(--lg-navy-deep);
+    --red: #ff4d55;
+    --red-deep: #6e1623;
+    --red-glow: rgba(255, 77, 85, 0.42);
+    --blue: #3d8bff;
+    --blue-deep: #123a73;
+    --blue-glow: rgba(61, 139, 255, 0.42);
+    --empty: #2b4661;
+    --element: #9fb0c0;
+    --wall: #d9a55c;
+    --bar: var(--lg-cream);
+    --wheel: #26394d;
+    --penalty: var(--lg-yellow);
+    --warn: var(--lg-yellow);
+    --danger: #ff4d55;
+    --good: var(--lg-teal);
+    --accent: var(--lg-teal);
+    --accent-ink: #ffffff;
+    --field: #7d7a70;
+    --radius: 18px;
+    --outline: 0px;
+}
+
+[data-theme="flat"] {
+    --bg: var(--lg-cream);
+    --bg-2: #ffffff;
+    --panel: #ffffff;
+    --panel-2: #f3f1ea;
+    --panel-inset: var(--lg-teal-tint);
+    --text: var(--lg-text);
+    --muted: var(--lg-text-soft);
+    --ink: var(--lg-navy);
+    --red: var(--lg-red);
+    --red-deep: var(--lg-red);
+    --red-glow: rgba(224, 57, 62, 0.25);
+    --blue: var(--lg-blue);
+    --blue-deep: var(--lg-blue);
+    --blue-glow: rgba(34, 104, 214, 0.25);
+    --empty: var(--lg-border);
+    --element: #aab6c0;
+    --wall: #d9a55c;
+    --bar: var(--lg-cream);
+    --wheel: #2c3e50;
+    --penalty: var(--lg-orange);
+    --warn: var(--lg-yellow);
+    --danger: var(--lg-red);
+    --good: var(--lg-teal-dark);
+    --accent: var(--lg-teal-dark);
+    --accent-ink: #ffffff;
+    --field: #b8b4a8;
+    --radius: 16px;
+    --outline: 2px;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    height: 100%;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--lg-font);
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.icon {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* ?slow=1 slows every animation down for screenshot review. */
+.slow-motion *,
+.slow-motion *::before,
+.slow-motion *::after {
+    animation-duration: calc(var(--dur, 0.6s) * 5) !important;
+}
+
+[hidden] {
+    display: none !important;
+}

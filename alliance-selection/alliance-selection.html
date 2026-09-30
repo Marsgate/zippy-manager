@@ -12,43 +12,72 @@
         <script src="../shared/page.js"></script>
     </head>
     <body>
-        <input type="button" value="Back to Schedule" id="view-schedule"/>
-        <input type="button" value="Undo Last Pick" id="undo-pick"/>
-        <input type="button" value="View Bracket" id="view-bracket"/>
-        <div class="row">
-            <div class="column">
-                <h1>Alliance Selection</h1>
-                <p id="selection-status"></p>
-                <div id="current-selection" hidden>
-                    <h2 id="captain-heading"></h2>
-                    <p>Select a partner for the current captain.</p>
-                    <div id="partner-list"></div>
+        <header class="app-header">
+            <div class="brand">
+                <img class="logo" src="../shared/images/logo.png" alt="">
+                <span><strong>Loosey Goosey Robotics</strong><small>Zippy Manager</small></span>
+            </div>
+            <nav class="nav-pills" aria-label="Tournament pages">
+                <input type="button" value="Home" data-goto="menu/menu.html"/>
+                <input type="button" value="Schedule" id="view-schedule"/>
+                <input type="button" value="Run Match" data-timer="qualification"/>
+                <span class="active" aria-current="page">Alliance Selection</span>
+                <input type="button" value="Bracket" id="view-bracket"/>
+            </nav>
+            <div class="header-tools">
+                <input type="button" class="btn-outline" value="Show Display" id="open-display"/>
+                <input type="button" class="btn-outline" value="Pair device" id="open-pairing"/>
+            </div>
+        </header>
+
+        <main class="page">
+            <p class="eyebrow">Eliminations</p>
+            <div class="title-row">
+                <h1 class="page-title">Alliance selection</h1>
+                <input type="button" class="btn-play" id="start-bracket" value="Start bracket ›" hidden/>
+            </div>
+            <div class="grid-2">
+                <section class="card">
+                    <div class="card-head">
+                        <h2>Picks</h2>
+                        <input type="button" class="btn-outline" value="Undo last pick" id="undo-pick"/>
+                    </div>
+                    <p id="selection-status" class="muted"></p>
+                    <div id="current-selection" hidden>
+                        <h3 id="captain-heading"></h3>
+                        <p class="muted">Choose a partner for this captain.</p>
+                        <div id="partner-list"></div>
+                    </div>
+                </section>
+                <div class="stack">
+                    <section class="card">
+                        <h2>Rankings</h2>
+                        <table id="rankings">
+                            <tr>
+                                <th>Rank</th>
+                                <th>Team</th>
+                                <th>W</th>
+                                <th>L</th>
+                                <th>T</th>
+                                <th>Points</th>
+                                <th>Status</th>
+                            </tr>
+                        </table>
+                    </section>
+                    <section class="card">
+                        <h2>Alliances</h2>
+                        <table id="alliances">
+                            <tr>
+                                <th>Seed</th>
+                                <th>Captain</th>
+                                <th>Partner</th>
+                            </tr>
+                        </table>
+                    </section>
                 </div>
             </div>
-            <div class="column">
-                <h1>Rankings</h1>
-                <table id="rankings">
-                    <tr>
-                        <th>Rank</th>
-                        <th>Team#</th>
-                        <th>Wins</th>
-                        <th>Losses</th>
-                        <th>Ties</th>
-                        <th>Total Points</th>
-                        <th>Status</th>
-                    </tr>
-                </table>
+        </main>
 
-                <h1>Selected Alliances</h1>
-                <table id="alliances">
-                    <tr>
-                        <th>Seed</th>
-                        <th>Captain</th>
-                        <th>Partner</th>
-                    </tr>
-                </table>
-            </div>
-        </div>
         <script src="./alliance-selection.js"></script>
     </body>
 </html>

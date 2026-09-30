@@ -6,7 +6,7 @@ function getScheduleRowClass(match, currentMatch) {
     return match.complete ? 'complete' : '';
 }
 
-window.pageUtils.runTournamentPage(function({ data, save, goTo, setStageAndGoToTimer }) {
+window.pageUtils.runTournamentPage(function({ data, save, goTo, setStageAndGoToTimer, playMatch }) {
     const rankings = window.tournamentUtils.buildRankings(data);
     const hasBracket = data.eliminations.matches.length > 0;
     const bracketButton = $('#view-bracket');
@@ -37,15 +37,25 @@ window.pageUtils.runTournamentPage(function({ data, save, goTo, setStageAndGoToT
     );
 
     bracketButton.prop('disabled', !hasBracket);
-    if (!hasBracket) {
-        bracketButton.val('Bracket Unavailable');
-    }
+    bracketButton.attr('title', hasBracket ? '' : 'The bracket is created after alliance selection');
 
     save();
 
     $('#view-timer').on('click', function() {
         setStageAndGoToTimer('qualification');
     });
+
+    // The first unplayed match; once every match is played, alliance selection is next.
+    const nextMatch = data.schedule.find(match => !match.complete);
+    $('#play-next')
+        .val(nextMatch ? 'Play Q' + nextMatch.matchNumber + ' ›' : 'Alliance selection ›')
+        .on('click', function() {
+            if (nextMatch) {
+                playMatch('qualification', nextMatch.matchNumber);
+            } else {
+                goTo('alliance-selection/alliance-selection.html');
+            }
+        });
 
     $('#view-alliance-selection').on('click', function() {
         goTo('alliance-selection/alliance-selection.html');

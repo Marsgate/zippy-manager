@@ -1,32 +1,64 @@
-#partner-list {
-    margin-top: 20px;
+.card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.6rem;
 }
 
-#partner-list input {
-    display: block;
-    margin: 10px 0;
+.card-head h2 {
+    margin: 0;
 }
 
-#alliances,
-#rankings {
-    border: 1px solid black;
-    text-align: left;
-    width: 100%;
-    margin-bottom: 20px;
-}
-
-input:disabled {
-    background-color: white;
-}
-
-#rankings tr.captain-team td {
-    background-color: lightgreen;
-}
-
-#rankings tr.selected-team td {
-    background-color: rgb(106, 133, 118);
+.stack {
+    display: grid;
+    gap: 1.5rem;
 }
 
 #current-selection {
-    margin-top: 20px;
+    margin-top: 1.2rem;
+}
+
+#captain-heading {
+    margin: 0 0 0.2rem;
+    font-size: 1.6rem;
+    letter-spacing: -0.03em;
+}
+
+/* Partner choices: a grid of team tiles. */
+#partner-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+    gap: 0.6rem;
+    margin-top: 1rem;
+}
+
+#partner-list input[type="button"] {
+    min-height: 3.4rem;
+    background: var(--lg-surface);
+    border-color: var(--lg-border);
+    color: var(--lg-navy);
+    font-size: 1.05rem;
+}
+
+#partner-list input[type="button"]:hover {
+    border-color: var(--lg-orange);
+    background: #fff4ef;
+}
+
+#rankings tr.captain-team td {
+    background: #fff4ef;
+}
+
+#rankings tr.captain-team td:first-child {
+    box-shadow: inset 4px 0 0 var(--lg-orange);
+}
+
+#rankings tr.selected-team td {
+    color: #9aa8b4;
+}
+
+#rankings td:nth-child(2),
+#alliances td:nth-child(n+2) {
+    font-weight: 800;
 }

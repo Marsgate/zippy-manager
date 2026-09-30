@@ -3,13 +3,14 @@
   "version": "1.0.0",
   "main": "main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test",
     "start": "electron ."
   },
   "author": "Micah Rassi",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "electron": "^37.2.3"
+    "electron": "^37.2.3",
+    "qrcode": "^1.5.4"
   }
 }

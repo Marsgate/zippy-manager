@@ -1,20 +1,30 @@
-#schedule {
-    border: 1px solid black;
-    text-align: left;
+/* Team columns take their alliance color; score columns are bold. */
+#schedule td:nth-child(2),
+#schedule td:nth-child(3),
+#schedule td:nth-child(6) {
+    color: var(--lg-red);
 }
 
-input:hover, #match-complete-container:hover {
-    background-color: lightgray;
+#schedule td:nth-child(4),
+#schedule td:nth-child(5),
+#schedule td:nth-child(7) {
+    color: var(--lg-blue);
 }
 
-.complete {
-    background-color: rgb(194, 232, 245) !important ;
+#schedule td:nth-child(n+6) {
+    font-weight: 800;
 }
 
-.current {
-    background-color: lightgreen !important;
+#schedule td:first-child,
+#rankings td:first-child {
+    color: var(--lg-text-soft);
 }
 
-.column {
-    flex: 50%;
+#rankings td:nth-child(2) {
+    font-weight: 800;
+}
+
+/* Finished matches fade back so the current and upcoming ones stand out. */
+#schedule tr.complete td {
+    opacity: 0.55;
 }

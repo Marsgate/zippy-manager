@@ -1,21 +1,181 @@
-html {
-    text-align: center;
+/* Title screen: navy hero with the brand's teal and orange circles. */
+.home {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    overflow: hidden;
+    background: var(--lg-navy);
+    color: #fff;
+    isolation: isolate;
 }
 
-h1 {
-    font-size: 64pt;
-    margin: 30px;
+.home::before,
+.home::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    border-radius: 50%;
 }
 
-th, td {
-    padding: 0 15px;
-    border: 1px solid gray;
-    margin: 0;
+.home::before {
+    width: 36rem;
+    height: 36rem;
+    top: -24rem;
+    left: -13rem;
+    background: var(--lg-teal);
+    opacity: 0.9;
 }
 
-img {
+.home::after {
+    width: 30rem;
+    height: 30rem;
+    bottom: -16rem;
+    right: -8rem;
+    background: var(--lg-orange);
+}
+
+.home-inner {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+    align-items: center;
+    gap: 3rem;
+    width: min(1280px, calc(100% - 3rem));
+    margin: 0 auto;
+    padding: 3rem 0;
+}
+
+.home-logo {
+    width: 8.5rem;
+    height: 8.5rem;
+    margin-bottom: 1.6rem;
+    padding: 0.6rem;
+    border-radius: 50%;
+    border: 5px solid var(--lg-orange);
+    background: #fff;
+    box-shadow: var(--lg-shadow);
+}
+
+.hero-headline {
+    display: grid;
+    justify-items: start;
+    gap: 0.14em;
+    margin: 0.5rem 0 1.4rem;
+    font-size: clamp(3rem, 7vw, 5.5rem);
+    line-height: 0.98;
+    letter-spacing: -0.06em;
+}
+
+.hero-headline span {
     display: block;
-    width: 800px;
-    height: 600px;
-    margin: 100px auto;
+    padding: 0.12em 0.24em 0.18em;
+    border-radius: 0.12em;
+    background: var(--lg-cream);
+    color: var(--lg-navy-deep);
+    box-shadow: 0.08em 0.08em 0 var(--lg-orange);
+}
+
+
+.home-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 2rem;
+}
+
+.home-actions input[type="button"] {
+    min-height: 3.2rem;
+    padding: 0.8rem 1.4rem;
+    font-size: 1.05rem;
+}
+
+.btn-light-outline {
+    background: transparent !important;
+    border-color: rgba(255, 255, 255, 0.72) !important;
+    color: #fff !important;
+}
+
+.btn-light-outline:hover {
+    background: #fff !important;
+    color: var(--lg-navy) !important;
+}
+
+.home-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: min(1280px, calc(100% - 3rem));
+    margin: 0 auto;
+    padding: 0 0 2rem;
+    color: #c2d3db;
+    font-weight: 600;
+}
+
+.btn-quiet {
+    min-height: 0 !important;
+    padding: 0.45rem 1rem !important;
+    background: rgba(7, 28, 46, 0.35) !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+    color: #fff !important;
+}
+
+/* "This season" card, echoing the website's hero panel. */
+.game-card {
+    /* Tokens the shared game icons expect. */
+    --red: var(--lg-red);
+    --blue: var(--lg-blue);
+    --ink: var(--lg-navy);
+    --element: #9aa3b5;
+    --wall: #d9a55c;
+    --empty: #c4c4c4;
+
+    padding: 1.8rem;
+    border-radius: 1rem;
+    background: var(--lg-surface);
+    color: var(--lg-text);
+    box-shadow: var(--lg-shadow);
+}
+
+.game-art {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1fr;
+    align-items: end;
+    gap: 1rem;
+    height: 11rem;
+    margin: 1rem 0 1.2rem;
+    padding: 1.2rem;
+    border-radius: 0.65rem;
+    background: var(--lg-teal-tint);
+}
+
+.game-art .icon-hex {
+    align-self: center;
+}
+
+.game-name {
+    font-size: 2rem;
+    letter-spacing: -0.045em;
+}
+
+
+.resume-btn {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+    min-height: 3.2rem;
+    padding: 0.55rem 1.4rem;
+}
+
+.resume-btn[hidden] {
+    display: none;
+}
+
+.resume-label {
+    font-size: 1.05rem;
+}
+
+.resume-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    opacity: 0.75;
 }

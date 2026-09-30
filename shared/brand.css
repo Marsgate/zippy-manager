@@ -1,0 +1,27 @@
+/* Loosey Goosey Robotics brand kit, shared by every screen in the app.
+   Palette, type, and components follow looseygooseyrobotics.github.io. */
+
+:root {
+    --lg-navy: #102a43;
+    --lg-navy-deep: #071c2e;
+    --lg-navy-soft: #1f4566;
+    --lg-teal: #00a9a5;
+    --lg-teal-dark: #007d7a;
+    --lg-teal-tint: #e1f4f2;
+    --lg-orange: #ff7043;
+    --lg-orange-hover: #ff8a65;
+    --lg-yellow: #ffcf4c;
+    --lg-cream: #f7f5ef;
+    --lg-surface: #ffffff;
+    --lg-text: #102a43;
+    --lg-text-soft: #486176;
+    --lg-border: #c8d9dc;
+    --lg-shadow: 0 18px 42px rgba(7, 28, 46, 0.13);
+    --lg-shadow-soft: 0 10px 24px rgba(7, 28, 46, 0.08);
+
+    /* Game alliance colors, tuned to sit well beside the brand palette. */
+    --lg-red: #e0393e;
+    --lg-blue: #2268d6;
+
+    --lg-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}

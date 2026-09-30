@@ -8,14 +8,39 @@
         <link rel="stylesheet" href="menu.css">
         <script src="../jquery.min.js"></script>
         <script src="../shared/page.js"></script>
+        <script src="../live/icons.js"></script>
     </head>
     <body>
-        <h1>Zippy Manager</h1>
-        <input type="button" value="Create a tournament" id="create-btn"/>
-        <input type="button" value="Load a tournament" id="load-btn"/>
+        <main class="home">
+            <div class="home-inner">
+                <div class="home-copy">
+                <img class="home-logo" src="../shared/images/logo.png" alt="Loosey Goosey Robotics goose">
+                <p class="eyebrow">Loosey Goosey Robotics</p>
+                <h1 class="hero-headline">
+                    <span>Zippy</span>
+                    <span>Manager</span>
+                </h1>
+                <div class="home-actions">
+                    <button type="button" class="resume-btn" id="resume-btn" hidden>
+                        <span class="resume-label">Resume tournament</span>
+                        <span class="resume-name" id="resume-name"></span>
+                    </button>
+                    <input type="button" value="Create a tournament" id="create-btn"/>
+                    <input type="button" class="btn-light-outline" value="Load a tournament" id="load-btn"/>
+                </div>
+                </div>
+                <aside class="game-card" aria-label="Current game">
+                    <p class="eyebrow">This season</p>
+                    <div class="game-art" id="game-art"></div>
+                    <h2 class="game-name">Hexy Hustle</h2>
+                </aside>
+            </div>
+            <footer class="home-footer">
+                <span>We're winging it.</span>
+                <input type="button" class="btn-quiet" value="Quit" id="quit-btn"/>
+            </footer>
+        </main>
 
-        <img src="zippystacky.png"/>
-        
         <script src="./menu.js"></script>
     </body>
 </html>

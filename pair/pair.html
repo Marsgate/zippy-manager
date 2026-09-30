@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="flat">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; img-src 'self' data:">
+        <title>Pair a device</title>
+        <link rel="stylesheet" href="../live/theme.css">
+        <link rel="stylesheet" href="pair.css">
+    </head>
+    <body>
+        <main class="pair">
+            <img class="pair-logo" src="../shared/images/logo.png" alt="">
+            <p class="eyebrow">Referee controller</p>
+            <h1>Pair the ref's phone or tablet</h1>
+            <ol class="steps">
+                <li>Connect the phone or tablet to the <b>same Wi-Fi</b> as this server.</li>
+                <li>Open the <b>Camera</b> app and scan this code.</li>
+            </ol>
+
+            <div class="qr-card">
+                <img id="qr" alt="QR code to open the ref controller">
+                <div class="no-network" id="no-network" hidden>
+                    This server isn't on a network yet. Join Wi-Fi, then reopen this window.
+                </div>
+            </div>
+
+            <div class="manual">
+                <div class="manual-label">Using the home-screen app? Open it and enter this PIN</div>
+                <div class="pin" id="pin" aria-label="Pairing PIN"></div>
+                <div class="manual-label">Ref page address</div>
+                <div class="url" id="url"></div>
+            </div>
+
+            <ul class="tips">
+                <li>For a full-screen app: in Safari tap Share ▸ <b>Add to Home Screen</b>; in Chrome tap ⋮ ▸ <b>Add to Home screen</b>.</li>
+                <li>Turn off <b>Auto-Lock</b> (screen timeout) on the device during the event.</li>
+                <li>Any other screen, such as a smart TV browser, can show the audience display at <span id="display-url"></span></li>
+            </ul>
+
+            <footer>
+                <span class="paired" id="paired"></span>
+                <button id="reset" class="secondary">Unpair all &amp; new PIN</button>
+                <button id="done">Done</button>
+            </footer>
+        </main>
+        <script src="pair.js"></script>
+    </body>
+</html>

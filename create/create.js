@@ -1,148 +1,18 @@
 let schedule = [];
 let teamArray = [];
 
-// We iterate through attempting to find matches with loosening rules
-const MATCH_SELECTION_RULES = [
-    { maxPartneredCount: 0, requireUnderTargetTeams: 2, avoidTripleMatch: true },
-    { maxPartneredCount: 0, requireUnderTargetTeams: 1, avoidTripleMatch: true },
-    { maxPartneredCount: 1, requireUnderTargetTeams: 1, avoidTripleMatch: true },
-    { maxPartneredCount: 1, requireUnderTargetTeams: 0, avoidTripleMatch: true },
-    { maxPartneredCount: 1, requireUnderTargetTeams: 0, avoidTripleMatch: false },
-    { maxPartneredCount: Infinity, requireUnderTargetTeams: 0, avoidTripleMatch: false }
-];
-
 function normalizeTeamList(rawValue) {
     return rawValue
         .trim()
         .replaceAll(' ', '')
         .replaceAll('\t', '')
         .split('\n')
+        .map(teamName => teamName.toUpperCase())
         .filter(teamName => teamName !== '');
 }
 
 function showError(message) {
     $('#error').text(message);
-}
-
-function shuffleArray(array) {
-    for (let index = array.length - 1; index > 0; index--) {
-        const swapIndex = Math.floor(Math.random() * (index + 1));
-        [array[index], array[swapIndex]] = [array[swapIndex], array[index]];
-    }
-
-    return array;
-}
-
-function createAllianceArray(teams) {
-    const alliances = [];
-
-    teams.forEach((team1, index1) => {
-        teams.slice(index1 + 1).forEach(team2 => {
-            alliances.push({
-                team1: team1,
-                team2: team2,
-                playedCount: 0
-            });
-        });
-    });
-
-    return alliances;
-}
-
-function hasTeamInBackToBackMatches(alliance, lastMatch, priorMatch) {
-    return [alliance.team1, alliance.team2].some(team =>
-        lastMatch.includes(team) && priorMatch.includes(team)
-    );
-}
-
-function countTeamsBelowTarget(alliance, targetMatchCount) {
-    return [alliance.team1, alliance.team2].filter(team => team.matchCount < targetMatchCount).length;
-}
-
-function matchesSelectionRule(alliance, rule, targetMatchCount, lastMatch, priorMatch) {
-    if (alliance.playedCount > rule.maxPartneredCount) {
-        return false;
-    }
-
-    if (rule.avoidTripleMatch && hasTeamInBackToBackMatches(alliance, lastMatch, priorMatch)) {
-        return false;
-    }
-
-    const underTargetTeamCount = countTeamsBelowTarget(alliance, targetMatchCount);
-    return underTargetTeamCount >= rule.requireUnderTargetTeams;
-}
-
-function findMatch(availableAlliances) {
-    const match = [];
-    const selectedAlliances = [];
-
-    shuffleArray(availableAlliances).forEach(alliance => {
-        if (match.length === 4) {
-            return;
-        }
-
-        if (match.includes(alliance.team1) || match.includes(alliance.team2)) {
-            return;
-        }
-
-        match.push(alliance.team1, alliance.team2);
-        selectedAlliances.push(alliance);
-    });
-
-    if (match.length < 4) {
-        return null;
-    }
-
-    selectedAlliances.forEach(alliance => {
-        alliance.playedCount++;
-    });
-
-    return match;
-}
-
-function chooseMatch(alliances, targetMatchCount, lastMatch, priorMatch) {
-    for (const rule of MATCH_SELECTION_RULES) {
-        const availableAlliances = alliances.filter(alliance =>
-            matchesSelectionRule(alliance, rule, targetMatchCount, lastMatch, priorMatch)
-        );
-        const match = findMatch(availableAlliances);
-        if (match) {
-            return match;
-        }
-    }
-
-    return null;
-}
-
-function randomizeMatchOrder(match) {
-    if (Math.random() > 0.5) {
-        [match[0], match[1], match[2], match[3]] = [match[2], match[3], match[0], match[1]];
-    }
-
-    if (Math.random() > 0.5) {
-        [match[0], match[1]] = [match[1], match[0]];
-    }
-
-    if (Math.random() > 0.5) {
-        [match[2], match[3]] = [match[3], match[2]];
-    }
-}
-
-function createMatchData(matchNumber, match) {
-    return {
-        matchNumber: matchNumber,
-        red1: match[0].name,
-        red2: match[1].name,
-        blue1: match[2].name,
-        blue2: match[3].name,
-        redScore: 0,
-        blueScore: 0,
-        complete: false
-    };
-}
-
-function getOverplayedTeams(totalMatchCount) {
-    return teamArray.filter(team => team.matchCount > totalMatchCount);
 }
 
 function renderSchedule() {
@@ -160,64 +30,17 @@ function renderSchedule() {
         )
     );
 
+    $('#schedule-empty').hide();
     $('#schedule-container').show();
     $('#create-btn').show();
 }
 
-function reportOverplayedTeams(totalMatchCount) {
-    const overplayedTeams = getOverplayedTeams(totalMatchCount);
-    if (overplayedTeams.length === 0) {
-        showError('');
-        return;
-    }
-
-    showError('Extra matches generated for: ' + overplayedTeams.map(team => team.name).join(', '));
-}
-
-function scheduleGen(totalMatchCount, teamNameArray, extraMatchTolerance) {
-    teamArray = teamNameArray.map(teamName => ({
-        name: teamName,
-        matchCount: 0
-    }));
-
-    const allianceArray = createAllianceArray(teamArray);
-    let lastMatch = [];
-    let priorMatch = [];
-    let matchNumber = 1;
-    let targetMatchCount = 1;
-
-    schedule = [];
-
-    while (targetMatchCount <= totalMatchCount) {
-        const match = chooseMatch(allianceArray, targetMatchCount, lastMatch, priorMatch);
-        if (!match) {
-            return false;
-        }
-
-        randomizeMatchOrder(match);
-        schedule.push(createMatchData(matchNumber, match));
-
-        matchNumber++;
-        priorMatch = lastMatch;
-        lastMatch = match;
-
-        match.forEach(team => {
-            team.matchCount++;
-        });
-
-        if (teamArray.every(team => team.matchCount >= targetMatchCount)) {
-            targetMatchCount++;
-        }
-    }
-
-    const success = getOverplayedTeams(totalMatchCount).length <= extraMatchTolerance;
-    if (!success) {
-        return false;
-    }
-
-    reportOverplayedTeams(totalMatchCount);
-    renderSchedule();
-    return true;
+function reportExtraMatches(totalMatchCount) {
+    const extraTeams = teamArray.filter(team => team.matchCount > totalMatchCount);
+    showError(extraTeams.length === 0
+        ? ''
+        : 'The match count does not divide evenly, so these teams play one extra match: ' +
+            extraTeams.map(team => team.name).join(', '));
 }
 
 function generateSchedule() {
@@ -239,17 +62,59 @@ function generateSchedule() {
         return;
     }
 
-    let extraMatchTolerance = 0;
-    let attempts = 0;
+    const maxLength = window.tournamentUtils.MAX_TEAM_NAME_LENGTH;
+    const tooLong = teamNameArray.filter(teamName => teamName.length > maxLength);
+    if (tooLong.length > 0) {
+        showError('Team names can be at most ' + maxLength + ' characters: ' + tooLong.join(', '));
+        return;
+    }
 
-    while (!scheduleGen(totalMatchCount, teamNameArray, extraMatchTolerance)) {
-        attempts++;
-        if (attempts > 1000) {
-            extraMatchTolerance++;
-            attempts = 0;
-        }
+    const result = window.scheduleUtils.generateSchedule(teamNameArray, totalMatchCount);
+    schedule = result.matches.map(match => Object.assign(match, { redScore: 0, blueScore: 0, complete: false }));
+    teamArray = result.teams;
+
+    reportExtraMatches(totalMatchCount);
+    renderSchedule();
+}
+
+// Suggests matches-per-team values (4-8) that give every team the same number of
+// matches: teams x matches must fill whole 4-team matches.
+const SUGGESTED_MATCH_COUNTS = [4, 5, 6, 7, 8];
+
+function renderMatchSuggestions() {
+    const teamCount = normalizeTeamList($('#team-list').val()).length;
+    const current = parseInt($('#match-count').val(), 10);
+    const box = $('#match-suggest');
+
+    if (teamCount < 4) {
+        box.prop('hidden', true);
+        return;
+    }
+
+    const even = SUGGESTED_MATCH_COUNTS.filter(count => (teamCount * count) % 4 === 0);
+    box.empty().prop('hidden', false);
+    $('<span class="suggest-label"/>')
+        .text('Divides evenly for ' + teamCount + ' teams:')
+        .appendTo(box);
+    even.forEach(count => {
+        $('<button type="button" class="chip"/>')
+            .text(count)
+            .attr('title', (teamCount * count / 4) + ' matches total')
+            .toggleClass('active', count === current)
+            .on('click', () => {
+                $('#match-count').val(count);
+                renderMatchSuggestions();
+            })
+            .appendTo(box);
+    });
+    if (Number.isInteger(current) && current > 0 && (teamCount * current) % 4 !== 0) {
+        $('<span class="suggest-warn"/>')
+            .text(current + ' leaves some teams with an extra match')
+            .appendTo(box);
     }
 }
+
+$('#team-list, #match-count').on('input', renderMatchSuggestions);
 
 $('#gen-btn').on('click', generateSchedule);
 

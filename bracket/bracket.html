@@ -12,11 +12,34 @@
         <script src="../shared/page.js"></script>
     </head>
     <body>
-        <input type="button" value="Back to Schedule" id="view-schedule"/>
-        <input type="button" value="View Match Timer" id="view-timer"/>
-        <h1>Elimination Bracket</h1>
-        <p id="bracket-status"></p>
-        <div id="bracket"></div>
+        <header class="app-header">
+            <div class="brand">
+                <img class="logo" src="../shared/images/logo.png" alt="">
+                <span><strong>Loosey Goosey Robotics</strong><small>Zippy Manager</small></span>
+            </div>
+            <nav class="nav-pills" aria-label="Tournament pages">
+                <input type="button" value="Home" data-goto="menu/menu.html"/>
+                <input type="button" value="Schedule" id="view-schedule"/>
+                <input type="button" value="Run Match" id="view-timer"/>
+                <input type="button" value="Alliance Selection" data-goto="alliance-selection/alliance-selection.html"/>
+                <span class="active" aria-current="page">Bracket</span>
+            </nav>
+            <div class="header-tools">
+                <input type="button" class="btn-outline" value="Show Display" id="open-display"/>
+                <input type="button" class="btn-outline" value="Pair device" id="open-pairing"/>
+            </div>
+        </header>
+
+        <main class="page">
+            <p class="eyebrow">Eliminations</p>
+            <div class="title-row">
+                <h1 class="page-title">Bracket</h1>
+                <input type="button" class="btn-play" id="play-next" value="Play next match"/>
+            </div>
+            <p id="bracket-status" class="muted"></p>
+            <div id="bracket"></div>
+        </main>
+
         <script src="./bracket.js"></script>
     </body>
 </html>

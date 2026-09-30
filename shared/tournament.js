@@ -156,6 +156,7 @@
         match.complete = false;
         match.redScore = 0;
         match.blueScore = 0;
+        delete match.scoring;
         match.winnerAlliance = null;
         match.winnerSeed = null;
         match.isBye = false;
@@ -382,7 +383,37 @@
         setCurrentEliminationMatch(eliminations);
     }
 
+    const MAX_TEAM_NAME_LENGTH = 8;
+
+    // Team names are shown in capitals everywhere. Older files may have lowercase
+    // names; rename them consistently unless that would make two names collide.
+    function uppercaseTeamNames(data) {
+        const names = (data.teams || []).map(team => team.name);
+        const upper = names.map(name => String(name).toUpperCase());
+        if (upper.every((name, i) => name === names[i]) || new Set(upper).size !== upper.length) {
+            return;
+        }
+        const up = name => (typeof name === 'string' ? name.toUpperCase() : name);
+        data.teams.forEach(team => { team.name = up(team.name); });
+        const matches = (data.schedule || []).concat((data.eliminations && data.eliminations.matches) || []);
+        matches.forEach(match => {
+            ['red1', 'red2', 'blue1', 'blue2'].forEach(key => { match[key] = up(match[key]); });
+            ['winnerAlliance'].forEach(key => {
+                if (match[key]) {
+                    match[key].captain = up(match[key].captain);
+                    match[key].partner = up(match[key].partner);
+                }
+            });
+        });
+        (data.alliances || []).forEach(alliance => {
+            alliance.captain = up(alliance.captain);
+            alliance.partner = up(alliance.partner);
+        });
+    }
+
     function ensureTournamentDataShape(data) {
+        uppercaseTeamNames(data);
+
         if (!Array.isArray(data.alliances)) {
             data.alliances = [];
         }
@@ -415,7 +446,8 @@
         data.eliminations = createEmptyEliminations();
     }
 
-    window.tournamentUtils = {
+    const api = {
+        MAX_TEAM_NAME_LENGTH: MAX_TEAM_NAME_LENGTH,
         buildRankings: buildRankings,
         createTournamentData: createTournamentData,
         ensureTournamentDataShape: ensureTournamentDataShape,
@@ -424,4 +456,10 @@
         resetEliminations: resetEliminations,
         updateEliminationProgress: updateEliminationProgress
     };
+
+    if (typeof module === 'object' && module.exports) {
+        module.exports = api;
+    } else {
+        window.tournamentUtils = api;
+    }
 })();

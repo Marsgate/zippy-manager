@@ -1,66 +1,91 @@
-h1,
-#bracket-status {
-    margin: 20px;
-}
-
 #bracket {
     display: flex;
     align-items: flex-start;
-    gap: 24px;
-    padding: 0 20px 20px;
+    gap: 1.5rem;
+    padding-bottom: 1rem;
     overflow-x: auto;
 }
 
 .round-column {
-    min-width: 260px;
+    min-width: 280px;
 }
 
 .round-column h2 {
-    margin-bottom: 12px;
+    margin-bottom: 0.9rem;
+    color: var(--lg-teal-dark);
+    font-size: 0.85rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
 .match-card {
-    border: 1px solid #222;
-    border-radius: 6px;
-    background: white;
-    margin-bottom: 16px;
+    margin-bottom: 1rem;
     overflow: hidden;
+    background: var(--lg-surface);
+    border: 1px solid var(--lg-border);
+    border-radius: 1rem;
+    box-shadow: var(--lg-shadow-soft);
 }
 
 .match-card.current {
-    background-color: lightgreen;
-}
-
-.match-card.complete {
-    background: rgb(194, 232, 245);
+    border-color: var(--lg-teal);
+    box-shadow: 0 0 0 3px var(--lg-teal-tint), var(--lg-shadow-soft);
 }
 
 .match-header {
-    background: #222;
-    color: white;
-    padding: 8px 12px;
-    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    padding: 0.6rem 1rem;
+    background: var(--lg-navy);
+    color: #fff;
+    font-weight: 800;
+}
+
+.match-card.current .match-header {
+    background: var(--lg-teal-dark);
+}
+
+.match-card.complete .match-header::after {
+    content: 'Complete';
+    color: #c2d3db;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
 .match-body {
-    padding: 12px;
+    padding: 0.4rem 1rem;
 }
 
 .alliance-row {
     display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 6px 0;
-    border-bottom: 1px solid #ddd;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #e6eef0;
+    font-weight: 700;
 }
 
 .alliance-row:last-child {
     border-bottom: 0;
 }
 
+.alliance-row:first-child {
+    color: var(--lg-red);
+}
+
+.alliance-row:last-child {
+    color: var(--lg-blue);
+}
+
 .seed {
-    font-weight: bold;
-    min-width: 70px;
+    min-width: 4.5rem;
+    color: var(--lg-text-soft);
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
 }
 
 .team-list {
@@ -68,5 +93,11 @@ h1,
 }
 
 .score {
-    font-weight: bold;
+    font-size: 1.2rem;
+    font-weight: 900;
+}
+
+/* In a finished match, the losing alliance fades so the winner stands out. */
+.alliance-row.lost {
+    opacity: 0.45;
 }

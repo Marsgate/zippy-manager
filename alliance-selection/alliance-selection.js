@@ -54,7 +54,8 @@ function renderPartnerOptions(partnerList, nextCaptain, rankings, alliances, sav
         .filter(team => team.name !== nextCaptain.name)
         .forEach(team => {
             $('<input type="button"/>')
-                .val('Select ' + team.name)
+                .val(team.name)
+                .attr('aria-label', 'Pick ' + team.name + ' as partner')
                 .on('click', function() {
                     saveSelection(nextCaptain.name, team.name);
                 })
@@ -62,7 +63,7 @@ function renderPartnerOptions(partnerList, nextCaptain, rankings, alliances, sav
         });
 }
 
-window.pageUtils.runTournamentPage(function({ data, save, goTo }) {
+window.pageUtils.runTournamentPage(function({ data, save, goTo, setStageAndGoToTimer }) {
     const rankings = window.tournamentUtils.buildRankings(data);
     const alliances = data.alliances;
 
@@ -74,16 +75,19 @@ window.pageUtils.runTournamentPage(function({ data, save, goTo }) {
     const captainHeading = $('#captain-heading');
     const undoButton = $('#undo-pick');
     const bracketButton = $('#view-bracket');
+    const startBracketButton = $('#start-bracket');
 
     function syncEliminations() {
         if (alliances.length >= 2 && getNextCaptain(rankings, alliances) === null) {
             window.tournamentUtils.regenerateEliminationBracket(data);
             bracketButton.prop('disabled', false);
+            startBracketButton.prop('hidden', false);
             return;
         }
 
         window.tournamentUtils.resetEliminations(data);
         bracketButton.prop('disabled', true);
+        startBracketButton.prop('hidden', true);
     }
 
     function refreshPage() {
@@ -138,6 +142,8 @@ window.pageUtils.runTournamentPage(function({ data, save, goTo }) {
 
     syncEliminations();
     refreshPage();
+    // Put alliance selection on the audience display (ignored until qualifications are done).
+    window.electronAPI.showAllianceSelection();
 
     undoButton.on('click', undoLastSelection);
 
@@ -147,5 +153,13 @@ window.pageUtils.runTournamentPage(function({ data, save, goTo }) {
 
     $('#view-bracket').on('click', function() {
         goTo('bracket/bracket.html');
+    });
+
+    // Once the bracket is under way, the same button just goes back to it.
+    startBracketButton.val(data.currentStage === 'elimination' ? 'Resume bracket ›' : 'Start bracket ›');
+
+    // Picks are done: switch to eliminations and open the first bracket match.
+    startBracketButton.on('click', function() {
+        setStageAndGoToTimer('elimination');
     });
 });

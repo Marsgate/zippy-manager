@@ -1,0 +1,12 @@
+{
+  "name": "Zippy Manager",
+  "short_name": "Zippy Manager",
+  "start_url": "/live/ref.html",
+  "scope": "/live/",
+  "display": "fullscreen",
+  "background_color": "#f7f5ef",
+  "theme_color": "#102a43",
+  "icons": [
+    { "src": "/shared/images/logo.png", "sizes": "480x480", "type": "image/png", "purpose": "any" }
+  ]
+}

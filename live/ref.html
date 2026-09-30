@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="flat">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Zippy Manager">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="/shared/images/logo.png">
+    <title>Zippy Manager</title>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="ref.css">
+    <script src="../shared/scoring.js"></script>
+    <script src="icons.js"></script>
+    <script src="mock.js"></script>
+    <script src="fit.js"></script>
+</head>
+<body>
+    <!-- Server only: the same header as the other tournament pages. -->
+    <header class="app-header" id="app-nav" hidden>
+        <div class="brand">
+            <img class="logo" src="/shared/images/logo.png" alt="">
+            <span><strong>Loosey Goosey Robotics</strong><small>Zippy Manager</small></span>
+        </div>
+        <nav class="nav-pills" aria-label="Tournament pages">
+            <button type="button" data-page="menu/menu.html">Home</button>
+            <button type="button" data-page="schedule/schedule.html">Schedule</button>
+            <span class="active" aria-current="page">Run Match</span>
+            <button type="button" data-page="alliance-selection/alliance-selection.html">Alliance Selection</button>
+            <button type="button" data-page="bracket/bracket.html" id="nav-bracket">Bracket</button>
+        </nav>
+        <div class="header-tools">
+            <button type="button" class="tool-btn" id="nav-display">Show Display</button>
+            <button type="button" class="tool-btn" id="nav-pair">Pair device</button>
+        </div>
+    </header>
+
+    <header class="bar">
+        <img class="bar-logo" src="/shared/images/logo.png" alt="Loosey Goosey Robotics">
+        <button class="nav-btn" data-action="prevMatch" aria-label="Previous match">‹</button>
+        <div class="match-title">
+            <div class="match-label" id="match-label"></div>
+            <div class="match-stage" id="match-stage"></div>
+        </div>
+        <button class="nav-btn" data-action="nextMatch" aria-label="Next match">›</button>
+        <div class="bar-spacer"></div>
+        <!-- What the audience display is showing right now; it follows check-in automatically. -->
+        <div class="tv-status" id="tv-status"><span class="tv-label">TV</span><span id="tv-text"></span><span id="tv-short"></span></div>
+        <button class="btn bar-btn" id="btn-fullscreen" hidden>Full screen</button>
+        <div class="conn" id="conn"><span class="dot"></span><span id="conn-text">Connected</span></div>
+    </header>
+
+    <!-- Before the match: check each team in. Once all four are ready, Start appears
+         and the audience display switches from the boards to the match timer. -->
+    <main class="screen checkin-screen" id="checkin-screen" hidden>
+        <div class="checkin-head">
+            <h2>Check in teams</h2>
+            <p>Tap each team when its robot is on the field and ready.</p>
+        </div>
+        <section class="checkin-grid">
+            <div class="checkin-side red" data-alliance="red" data-home="red">
+                <button class="team-check" data-action="toggleReady" data-slot="0"><span class="check-box"></span><span class="check-name"></span><span class="check-state"></span></button>
+                <button class="team-check" data-action="toggleReady" data-slot="1"><span class="check-box"></span><span class="check-name"></span><span class="check-state"></span></button>
+            </div>
+            <div class="checkin-side blue" data-alliance="blue" data-home="blue">
+                <button class="team-check" data-action="toggleReady" data-slot="0"><span class="check-box"></span><span class="check-name"></span><span class="check-state"></span></button>
+                <button class="team-check" data-action="toggleReady" data-slot="1"><span class="check-box"></span><span class="check-name"></span><span class="check-state"></span></button>
+            </div>
+        </section>
+        <footer class="checkin-foot">
+            <div class="checkin-status" id="checkin-status"></div>
+            <button class="btn subtle" id="btn-start-anyway" data-action="startAnyway">Start without everyone</button>
+            <button class="btn primary start-match" id="btn-start-match" data-action="start">Start match</button>
+        </footer>
+    </main>
+
+    <!-- After qualifications: the ref can run alliance selection from here too. -->
+    <main class="screen alliance-screen" id="alliance-screen" hidden>
+        <div class="as-head">
+            <div>
+                <h2>Alliance selection</h2>
+                <p id="as-status"></p>
+            </div>
+            <button class="btn as-undo" data-action="undoPick" id="as-undo">↶ Undo last pick</button>
+        </div>
+        <div class="as-body">
+            <section class="as-pick">
+                <div class="as-captain" id="as-captain-card">
+                    <span class="as-label">Captain</span>
+                    <span class="as-captain-name" id="as-captain"></span>
+                </div>
+                <p class="as-hint" id="as-hint">Tap the team they pick as their partner</p>
+                <div class="as-grid" id="as-grid"></div>
+            </section>
+            <section class="as-alliances">
+                <div class="as-label">Alliances</div>
+                <ol class="as-list" id="as-list"></ol>
+            </section>
+        </div>
+        <button class="btn primary as-start" data-action="startBracket" id="as-start" hidden>Start bracket ›</button>
+    </main>
+
+    <!-- Live match: timer + tower bonus + penalties -->
+    <main class="screen live-screen" id="live-screen" hidden>
+        <section class="timer-strip">
+            <div class="time" id="time">2:00</div>
+            <div class="timer-buttons">
+                <button class="btn primary" id="btn-start" data-action="start">Start</button>
+                <button class="btn" id="btn-reset" data-action="reset">Reset</button>
+                <button class="btn" id="btn-end" data-action="endMatch">Score now</button>
+            </div>
+        </section>
+
+        <section class="alliances">
+            <div class="side red" data-alliance="red" data-home="red">
+                <div class="teams"></div>
+                <button class="tower-btn" data-action="bonus">
+                    <span class="tower-btn-icon"></span>
+                    <span class="tower-btn-text"><strong>+1</strong> Tower</span>
+                </button>
+                <div class="counts">
+                    <div class="count"><span class="count-label">Bonus</span><span class="count-value" data-field="bonus">0</span></div>
+                    <div class="count penalty"><span class="count-label">Penalties</span><span class="count-value" data-field="penalties">0</span></div>
+                </div>
+                <div class="penalty-row">
+                    <button class="pen-btn" data-action="penalty" data-value="1">−1</button>
+                    <button class="pen-btn" data-action="penalty" data-value="2">−2</button>
+                    <button class="pen-btn" data-action="penalty" data-value="3">−3</button>
+                </div>
+                <button class="undo-btn" data-action="undo"><span class="undo-arrow">↶</span> <span class="undo-text">Nothing to undo</span></button>
+            </div>
+
+            <div class="side blue" data-alliance="blue" data-home="blue">
+                <div class="teams"></div>
+                <button class="tower-btn" data-action="bonus">
+                    <span class="tower-btn-icon"></span>
+                    <span class="tower-btn-text"><strong>+1</strong> Tower</span>
+                </button>
+                <div class="counts">
+                    <div class="count"><span class="count-label">Bonus</span><span class="count-value" data-field="bonus">0</span></div>
+                    <div class="count penalty"><span class="count-label">Penalties</span><span class="count-value" data-field="penalties">0</span></div>
+                </div>
+                <div class="penalty-row">
+                    <button class="pen-btn" data-action="penalty" data-value="1">−1</button>
+                    <button class="pen-btn" data-action="penalty" data-value="2">−2</button>
+                    <button class="pen-btn" data-action="penalty" data-value="3">−3</button>
+                </div>
+                <button class="undo-btn" data-action="undo"><span class="undo-arrow">↶</span> <span class="undo-text">Nothing to undo</span></button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Post-match: field-element scoring -->
+    <main class="screen score-screen" id="score-screen" hidden>
+        <section class="score-head">
+            <div class="head-side red" data-alliance="red" data-home="red">
+                <div class="teams"></div>
+                <div class="mini-steppers">
+                    <div class="mini"><span>Bonus</span><button data-action="adjBonus" data-delta="-1">−</button><b data-field="bonus">0</b><button data-action="adjBonus" data-delta="1">+</button></div>
+                    <div class="mini"><span>Penalties</span><button data-action="adjPenalties" data-delta="-1">−</button><b data-field="penalties">0</b><button data-action="adjPenalties" data-delta="1">+</button></div>
+                </div>
+                <div class="head-total"><span>Total</span><b data-field="total">0</b></div>
+            </div>
+            <div class="head-side blue" data-alliance="blue" data-home="blue">
+                <div class="head-total"><span>Total</span><b data-field="total">0</b></div>
+                <div class="mini-steppers">
+                    <div class="mini"><span>Bonus</span><button data-action="adjBonus" data-delta="-1">−</button><b data-field="bonus">0</b><button data-action="adjBonus" data-delta="1">+</button></div>
+                    <div class="mini"><span>Penalties</span><button data-action="adjPenalties" data-delta="-1">−</button><b data-field="penalties">0</b><button data-action="adjPenalties" data-delta="1">+</button></div>
+                </div>
+                <div class="teams"></div>
+            </div>
+        </section>
+
+        <section class="field-wrap">
+            <div class="field" id="field">
+                <div class="zone scoring red" data-alliance="red" data-home="red"></div>
+                <div class="zone start red"></div>
+                <div class="zone scoring blue" data-alliance="blue" data-home="blue"></div>
+                <div class="zone start blue"></div>
+                <div class="hang-bar"></div>
+
+                <div class="zone-stepper red" data-alliance="red" data-home="red">
+                    <button class="step" data-action="adjZone" data-delta="1">+</button>
+                    <div class="zone-count"><span class="zone-hex"></span><b data-field="zoneHexes">0</b></div>
+                    <button class="step" data-action="adjZone" data-delta="-1">−</button>
+                </div>
+                <div class="zone-stepper blue" data-alliance="blue" data-home="blue">
+                    <button class="step" data-action="adjZone" data-delta="1">+</button>
+                    <div class="zone-count"><span class="zone-hex"></span><b data-field="zoneHexes">0</b></div>
+                    <button class="step" data-action="adjZone" data-delta="-1">−</button>
+                </div>
+
+                <button class="tower-tile t0" data-action="cycleTower" data-index="0"></button>
+                <button class="tower-tile t1" data-action="cycleTower" data-index="1"></button>
+                <button class="tower-tile t2" data-action="cycleTower" data-index="2"></button>
+                <button class="tower-tile t3" data-action="cycleTower" data-index="3"></button>
+
+                <div class="hangers red" data-alliance="red" data-home="red">
+                    <button class="robot-tile" data-action="toggleHang" data-slot="0"></button>
+                    <button class="robot-tile" data-action="toggleHang" data-slot="1"></button>
+                </div>
+                <div class="hangers blue" data-alliance="blue" data-home="blue">
+                    <button class="robot-tile" data-action="toggleHang" data-slot="0"></button>
+                    <button class="robot-tile" data-action="toggleHang" data-slot="1"></button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Phones: the same field elements as a compact list, since a map is too small to tap there. -->
+        <section class="phone-score">
+            <div class="ps-row">
+                <div class="ps-label">Zone hexes</div>
+                <div class="ps-pair">
+                    <div class="ps-zone red" data-alliance="red" data-home="red">
+                        <button class="step" data-action="adjZone" data-delta="-1" aria-label="One fewer hex">−</button>
+                        <div class="ps-count"><span class="zone-hex"></span><b data-field="zoneHexes">0</b></div>
+                        <button class="step" data-action="adjZone" data-delta="1" aria-label="One more hex">+</button>
+                    </div>
+                    <div class="ps-zone blue" data-alliance="blue" data-home="blue">
+                        <button class="step" data-action="adjZone" data-delta="-1" aria-label="One fewer hex">−</button>
+                        <div class="ps-count"><span class="zone-hex"></span><b data-field="zoneHexes">0</b></div>
+                        <button class="step" data-action="adjZone" data-delta="1" aria-label="One more hex">+</button>
+                    </div>
+                </div>
+            </div>
+            <div class="ps-row ps-tower-row">
+                <div class="ps-label">Towers <small>tap: red › blue › empty</small></div>
+                <div class="ps-towers">
+                    <button class="tower-tile" data-action="cycleTower" data-index="0"></button>
+                    <button class="tower-tile" data-action="cycleTower" data-index="1"></button>
+                    <span class="ps-bar"></span>
+                    <button class="tower-tile" data-action="cycleTower" data-index="2"></button>
+                    <button class="tower-tile" data-action="cycleTower" data-index="3"></button>
+                </div>
+            </div>
+            <div class="ps-row">
+                <div class="ps-label">Hanging</div>
+                <div class="ps-pair">
+                    <div class="hangers ps-hangers red" data-alliance="red" data-home="red">
+                        <button class="robot-tile" data-action="toggleHang" data-slot="0"></button>
+                        <button class="robot-tile" data-action="toggleHang" data-slot="1"></button>
+                    </div>
+                    <div class="hangers ps-hangers blue" data-alliance="blue" data-home="blue">
+                        <button class="robot-tile" data-action="toggleHang" data-slot="0"></button>
+                        <button class="robot-tile" data-action="toggleHang" data-slot="1"></button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="score-foot">
+            <button class="btn" data-action="backToLive">‹ Back</button>
+            <button class="btn replay-btn" data-action="replay" hidden>↺ Replay match</button>
+            <button class="btn flip-btn" data-action="flipField" aria-label="Flip field sides">⇄ Flip</button>
+            <div class="hex-budget" id="hex-budget"></div>
+            <button class="btn primary submit" data-action="submit">Submit final score</button>
+        </section>
+    </main>
+
+    <main class="screen no-match" id="waiting">
+        <div class="empty-card">
+            <div class="waiting-hex" id="waiting-hex"></div>
+            <h2 id="waiting-title">Connecting to the server…</h2>
+            <p>Make sure this device is on the same Wi-Fi as the server and Zippy Manager is open.</p>
+        </div>
+    </main>
+
+    <main class="screen no-match" id="no-match" hidden>
+        <div class="empty-card">
+            <h2>No match selected</h2>
+            <p>Load a tournament on the server to start refereeing.</p>
+        </div>
+    </main>
+
+    <div class="pair-overlay" id="pair" hidden>
+        <form class="pair-card" id="pair-form" autocomplete="off">
+            <div class="pair-hex" id="pair-hex"></div>
+            <h2>Scan to control matches</h2>
+            <p class="pair-scan">On the server, click <b>Pair device</b>, then scan the QR code with this device's <b>Camera</b> app.</p>
+            <!-- Home-screen apps can't be reached by a QR scan (it opens Safari), so they get a PIN box instead. -->
+            <div class="pair-pin-entry" id="pair-pin-entry" hidden>
+                <p>On the server, click <b>Pair device</b> and enter the PIN it shows.</p>
+                <input id="pair-pin" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="••••••" aria-label="PIN">
+                <div class="pair-error" id="pair-error"></div>
+                <button class="btn primary" type="submit">Pair</button>
+            </div>
+            <a class="pair-view" href="/display">View-only display instead</a>
+        </form>
+    </div>
+
+    <div class="toast" id="toast" role="status" hidden></div>
+
+    <script src="client.js"></script>
+    <script src="ref.js"></script>
+</body>
+</html>

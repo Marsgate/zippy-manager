@@ -1,41 +1,121 @@
-html {
-    text-align: center;
+.create-grid {
+    display: grid;
+    grid-template-columns: minmax(300px, 0.8fr) minmax(0, 1.2fr);
+    gap: 1.5rem;
+    align-items: start;
 }
 
-h1 {
-    margin: 30px 0px;
+.field-label {
+    display: block;
+    margin: 1rem 0 0.4rem;
+    font-weight: 800;
+}
+
+.hint {
+    margin-left: 0.4rem;
+    color: var(--lg-text-soft);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+#match-count,
+#team-list {
+    width: 100%;
+    padding: 0.7rem 0.85rem;
+    border: 2px solid var(--lg-border);
+    border-radius: 0.65rem;
+    background: var(--lg-cream);
+    color: var(--lg-text);
+    font: inherit;
+    font-weight: 700;
 }
 
 #match-count {
-    display: block;
-    margin-bottom: 20px;
-    margin: auto;
-    margin-top: 5px;
-    margin-bottom: 30px;
+    max-width: 10rem;
 }
 
 #team-list {
-    height: 300px;
-    width: 300px;
-    display: block;
-    margin: auto;
-    margin-top: 5px;
+    min-height: 18rem;
+    resize: vertical;
+    text-transform: uppercase;
+    line-height: 1.6;
 }
 
-#gen-btn {
-    margin-top: 20px;
-}
-
-.column1 {
-    flex: 30%;
-    margin: 20px;
-}
-
-.column2 {
-    flex: 70%;
-    margin: 20px;
+#match-count:focus,
+#team-list:focus {
+    outline: none;
+    border-color: var(--lg-teal);
+    background: #fff;
 }
 
 #error {
-    margin-bottom: 20px;
+    min-height: 1.4rem;
+    margin-top: 0.8rem;
+    color: var(--lg-red);
+    font-weight: 700;
+}
+
+.create-actions {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 0.6rem;
+}
+
+#schedule td:nth-child(2),
+#schedule td:nth-child(3) {
+    color: var(--lg-red);
+}
+
+#schedule td:nth-child(4),
+#schedule td:nth-child(5) {
+    color: var(--lg-blue);
+}
+
+/* Matches-per-team suggestions */
+.match-suggest {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.6rem;
+    font-size: 0.9rem;
+    color: var(--lg-text-soft);
+}
+
+.match-suggest[hidden] {
+    display: none;
+}
+
+.suggest-label {
+    margin-right: 0.2rem;
+    font-weight: 600;
+}
+
+.match-suggest .chip {
+    min-height: 0;
+    min-width: 2.4rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    border: 2px solid var(--lg-border);
+    background: var(--lg-surface);
+    color: var(--lg-navy);
+    font-weight: 800;
+}
+
+.match-suggest .chip:hover {
+    border-color: var(--lg-teal);
+    background: var(--lg-teal-tint);
+    transform: none;
+}
+
+.match-suggest .chip.active {
+    border-color: var(--lg-teal-dark);
+    background: var(--lg-teal-dark);
+    color: #fff;
+}
+
+.suggest-warn {
+    flex-basis: 100%;
+    color: #b4541f;
+    font-weight: 700;
 }

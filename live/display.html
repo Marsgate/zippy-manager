@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="arena">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Zippy Manager Display</title>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="display.css">
+    <script src="../shared/scoring.js"></script>
+    <script src="icons.js"></script>
+    <script src="mock.js"></script>
+    <script src="fit.js"></script>
+</head>
+<body>
+    <div id="app">
+        <header class="topbar">
+            <div class="match-id"><span id="stage-name"></span><span id="match-label"></span></div>
+            <div class="brand">
+                <span class="brand-text"><b>Loosey Goosey Robotics</b><small>Hexy Hustle</small></span>
+                <img class="brand-logo" src="/shared/images/logo.png" alt="">
+            </div>
+        </header>
+
+        <main class="live" id="live">
+            <section class="alliance red" data-alliance="red">
+                <div class="teams"></div>
+                <div class="stat stat-bonus">
+                    <div class="stat-icon"></div>
+                    <div class="stat-body">
+                        <div class="stat-label">Tower bonus</div>
+                        <div class="stat-value" data-field="bonus">0</div>
+                    </div>
+                </div>
+                <div class="stat stat-penalty">
+                    <div class="stat-icon"></div>
+                    <div class="stat-body">
+                        <div class="stat-label">Penalties</div>
+                        <div class="stat-value" data-field="penalties">0</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="clock">
+                <div class="ring">
+                    <svg viewBox="0 0 200 200" class="ring-svg" aria-hidden="true">
+                        <circle cx="100" cy="100" r="92" class="ring-track"/>
+                        <circle cx="100" cy="100" r="92" class="ring-fill" id="ring-fill"/>
+                    </svg>
+                    <div class="time" id="time">2:00</div>
+                    <div class="phase" id="phase-label"></div>
+                </div>
+            </section>
+
+            <section class="alliance blue" data-alliance="blue">
+                <div class="teams"></div>
+                <div class="stat stat-bonus">
+                    <div class="stat-icon"></div>
+                    <div class="stat-body">
+                        <div class="stat-label">Tower bonus</div>
+                        <div class="stat-value" data-field="bonus">0</div>
+                    </div>
+                </div>
+                <div class="stat stat-penalty">
+                    <div class="stat-icon"></div>
+                    <div class="stat-body">
+                        <div class="stat-label">Penalties</div>
+                        <div class="stat-value" data-field="penalties">0</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <main class="final" id="final" hidden>
+            <div class="banner" id="banner"></div>
+            <div class="tally">
+                <div class="tally-side red" data-alliance="red">
+                    <div class="teams"></div>
+                    <div class="total" data-total>0</div>
+                </div>
+                <div class="tally-rows" id="tally-rows"></div>
+                <div class="tally-side blue" data-alliance="blue">
+                    <div class="teams"></div>
+                    <div class="total" data-total>0</div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Between matches, until every team is checked in: rankings and schedule take turns. -->
+        <main class="board" id="board" hidden>
+            <div class="board-head">
+                <div>
+                    <p class="board-eyebrow" id="board-stage"></p>
+                    <h1 class="board-title" id="board-title"></h1>
+                </div>
+                <div class="board-dots" aria-hidden="true">
+                    <span class="board-dot" data-board="rankings">Rankings</span>
+                    <span class="board-dot" data-board="schedule">Schedule</span>
+                </div>
+            </div>
+            <div class="board-body" id="board-body"></div>
+        </main>
+
+        <!-- After qualifications: alliance selection as it happens on the server. -->
+        <main class="alliance-board" id="alliance-board" hidden>
+            <div class="board-head">
+                <div>
+                    <p class="board-eyebrow">Eliminations</p>
+                    <h1 class="board-title">Alliance selection</h1>
+                </div>
+                <div class="ab-status" id="ab-status"></div>
+            </div>
+            <div class="ab-body">
+                <section class="ab-seeds" id="ab-seeds"></section>
+                <section class="ab-pool">
+                    <h2 class="ab-pool-title">Available teams</h2>
+                    <div class="ab-pool-grid" id="ab-pool"></div>
+                </section>
+            </div>
+        </main>
+
+        <footer class="on-deck" id="on-deck" hidden>
+            <span class="on-deck-tag">On deck</span>
+            <span class="on-deck-label" id="on-deck-label"></span>
+            <span class="on-deck-teams red" id="on-deck-red"></span>
+            <span class="on-deck-vs">vs</span>
+            <span class="on-deck-teams blue" id="on-deck-blue"></span>
+        </footer>
+    </div>
+    <script src="client.js"></script>
+    <script src="display.js"></script>
+</body>
+</html>
