@@ -48,7 +48,10 @@
           ]
         }
       ],
-      "category": "public.app-category.sports"
+      "category": "public.app-category.sports",
+      "extendInfo": {
+        "NSLocalNetworkUsageDescription": "Zippy Manager serves the referee controller and audience display to phones, tablets and TVs on this network."
+      }
     },
     "win": {
       "target": [

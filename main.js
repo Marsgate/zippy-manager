@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog, Menu, screen } = require('electron/
 const path = require('node:path');
 const fs = require('node:fs');
 const os = require('node:os');
+const dgram = require('node:dgram');
 const QRCode = require('qrcode');
 const { MatchController } = require('./server/match-controller');
 const { LiveServer } = require('./server/live-server');
@@ -50,6 +51,23 @@ function lanAddresses() {
     const isPrivate = ({ address }) => /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(address);
     const lan = addresses.some(isPrivate) ? addresses.filter(isPrivate) : addresses;
     return lan.sort((a, b) => (a.name === 'en0' ? -1 : 0) - (b.name === 'en0' ? -1 : 0));
+}
+
+// macOS 15+ silently drops the live server's replies to ref phones and tablets until the app
+// has Local Network permission, and it only asks once the app itself sends something to the
+// network. A one-off mDNS query (for _services._dns-sd._udp.local) raises that prompt at launch.
+function requestLocalNetworkAccess() {
+    if (process.platform !== 'darwin') {
+        return;
+    }
+    const labels = ['_services', '_dns-sd', '_udp', 'local'];
+    const name = Buffer.concat(labels.map(label => Buffer.concat([Buffer.from([label.length]), Buffer.from(label)])));
+    const header = Buffer.from([0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]);
+    // Root label, then type PTR (12) and class IN (1).
+    const question = Buffer.concat([name, Buffer.from([0, 0, 12, 0, 1])]);
+    const socket = dgram.createSocket('udp4');
+    socket.on('error', () => socket.close());
+    socket.send(Buffer.concat([header, question]), 5353, '224.0.0.251', () => socket.close());
 }
 
 async function getPairingInfo() {
@@ -421,6 +439,7 @@ app.whenReady().then(async () => {
         onTokensChanged: saveTokens
     });
     await liveServer.listen();
+    requestLocalNetworkAccess();
 
     Menu.setApplicationMenu(createAppMenu());
 
